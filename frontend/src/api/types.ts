@@ -39,6 +39,9 @@ export interface ReceiptSummary {
 
 export interface ReceiptLine {
   id: number;
+  product: number | null;
+  product_name: string | null;
+  product_thumbnail: string | null;
   position: number;
   line_type: LineType;
   description: string;
@@ -92,8 +95,18 @@ export interface Summary {
   last_sync: JobRun | null;
 }
 
-export interface TopItem {
-  description: string;
+/** An item is a catalogue product, or a receipt description not yet identified. */
+export interface ItemIdentity {
+  key: string;
+  product_id: number | null;
+  name: string;
+  packaging: string;
+  thumbnail: string;
+  section: string | null;
+  description: string | null;
+}
+
+export interface TopItem extends ItemIdentity {
   spent: Money;
   purchases: number;
   quantity: string;
@@ -105,8 +118,7 @@ export interface TopItems {
   by_purchases: TopItem[];
 }
 
-export interface Item {
-  description: string;
+export interface Item extends ItemIdentity {
   unit: Unit;
   purchases: number;
   quantity: string;
@@ -125,15 +137,70 @@ export interface Item {
 export interface ItemDetail extends Omit<Item, "trend"> {
   frequency_days: number | null;
   average_price: Money;
+  product: {
+    mercadona_id: string | null;
+    share_url: string;
+    unit_price: Money | null;
+    bulk_price: Money | null;
+    reference_price: string | null;
+    reference_format: string;
+    is_active: boolean;
+    is_manual: boolean;
+    category_path: string[];
+  } | null;
+  aliases: { description: string; source: "auto" | "manual"; score: string | null }[];
+  catalog_prices: { date: string; price: Money }[];
   monthly: { month: string; spent: Money; quantity: string }[];
   history: {
     date: string;
     receipt_id: number;
+    description: string;
     quantity: string;
     unit: Unit;
     unit_price: Money;
     amount: Money;
   }[];
+}
+
+export interface CategorySpend {
+  month: string | null;
+  total: Money;
+  sections: { section: string | null; spent: Money; share: string; items: number }[];
+}
+
+export interface ProductSummary {
+  id: number;
+  mercadona_id: string | null;
+  name: string;
+  packaging: string;
+  thumbnail: string;
+  share_url: string;
+  unit_price: Money | null;
+  bulk_price: Money | null;
+  reference_price: string | null;
+  reference_format: string;
+  is_active: boolean;
+  is_manual: boolean;
+  category_path: string[];
+}
+
+export interface ReviewItem {
+  description: string;
+  purchases: number;
+  spent: Money;
+  last_purchase: string;
+  last_price: Money | null;
+  unit: Unit;
+  suggestions: { score: string; product: ProductSummary }[];
+}
+
+export interface CatalogStatus {
+  products: number;
+  active: number;
+  manual: number;
+  aliases: number;
+  unmatched: number;
+  last_sync: JobRun | null;
 }
 
 export interface GmailStatus {

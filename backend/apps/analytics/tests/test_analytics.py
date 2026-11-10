@@ -89,20 +89,17 @@ def test_summary(client, data):
 def test_top_items(client, data):
     body = client.get(reverse("analytics-top-items"), {"month": "2026-11"}).json()
 
-    assert body["by_spend"][0] == {
-        "description": "LECHE",
-        "spent": "3.70",
-        "purchases": 2,
-        "quantity": "3.000",
-    }
-    assert [r["description"] for r in body["by_purchases"]] == ["LECHE", "PAN"]
+    top = body["by_spend"][0]
+    assert (top["key"], top["name"], top["product_id"]) == ("d:LECHE", "LECHE", None)
+    assert (top["spent"], top["purchases"], top["quantity"]) == ("3.70", 2, "3.000")
+    assert [r["name"] for r in body["by_purchases"]] == ["LECHE", "PAN"]
 
 
 def test_items_list_and_sorting(client, data):
     rows = client.get(reverse("analytics-items")).json()
 
     leche = rows[0]
-    assert leche["description"] == "LECHE"
+    assert leche["name"] == "LECHE" and leche["key"] == "d:LECHE"
     assert leche["purchases"] == 3
     assert leche["spent"] == "4.70"
     assert leche["first_price"] == "1.00"
@@ -111,7 +108,7 @@ def test_items_list_and_sorting(client, data):
     assert leche["trend"] == ["1.00", "1.20", "1.25"]
 
     by_name = client.get(reverse("analytics-items"), {"sort": "name"}).json()
-    assert [r["description"] for r in by_name] == ["LECHE", "PAN"]
+    assert [r["name"] for r in by_name] == ["LECHE", "PAN"]
     assert len(client.get(reverse("analytics-items"), {"search": "pa"}).json()) == 1
 
 
@@ -132,3 +129,59 @@ def test_item_detail_not_found(client):
     response = client.get(reverse("analytics-item-detail"), {"description": "NOPE"})
 
     assert response.status_code == 404
+
+
+@pytest.fixture
+def linked(data):
+    from apps.products.models import Category, Product
+    from apps.products.services import link
+
+    section = Category.objects.create(id=1, name="Lácteos", level=0)
+    cat = Category.objects.create(id=10, name="Leche", level=1, parent=section)
+    sub = Category.objects.create(id=100, name="Leche desnatada", level=2, parent=cat)
+    product = Product.objects.create(
+        mercadona_id="1", name="Leche desnatada Hacendado", category=sub, unit_price=D("1.30")
+    )
+    product.catalog_prices.create(date=datetime(2026, 11, 1).date(), unit_price=D("1.30"))
+    # Two receipt descriptions for the same product are merged
+    ReceiptLine.objects.filter(description="PAN").update(description="LECHE DESN")
+    link("LECHE", product, "manual")
+    link("LECHE DESN", product, "auto", D("0.9"))
+    return product
+
+
+def test_items_are_grouped_by_product(client, linked):
+    rows = client.get(reverse("analytics-items")).json()
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert (row["key"], row["product_id"], row["name"], row["section"]) == (
+        f"p{linked.pk}",
+        linked.pk,
+        "Leche desnatada Hacendado",
+        "Lácteos",
+    )
+    assert row["purchases"] == 3
+    assert row["spent"] == "6.30"
+
+
+def test_product_detail(client, linked):
+    body = client.get(reverse("analytics-product-detail", args=[linked.pk])).json()
+
+    assert body["product"]["category_path"] == ["Lácteos", "Leche", "Leche desnatada"]
+    assert {a["description"] for a in body["aliases"]} == {"LECHE", "LECHE DESN"}
+    assert body["catalog_prices"] == [{"date": "2026-11-01", "price": "1.30"}]
+    assert body["history"][0]["description"] in {"LECHE", "LECHE DESN"}
+    assert client.get(reverse("analytics-product-detail", args=[999])).status_code == 404
+
+
+def test_categories(client, linked):
+    receipt("2026-11-09 12:00", [("SIN ENLAZAR", "1", "2.00")])
+
+    body = client.get(reverse("analytics-categories"), {"month": "2026-11"}).json()
+
+    assert body["total"] == "6.30"
+    assert [(s["section"], s["spent"], s["share"]) for s in body["sections"]] == [
+        ("Lácteos", "4.30", "68.3"),
+        (None, "2.00", "31.7"),
+    ]

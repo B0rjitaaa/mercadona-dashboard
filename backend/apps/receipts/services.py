@@ -120,3 +120,7 @@ def _apply_parsed(receipt: Receipt, parsed: ParsedReceipt) -> None:
         )
         for line in parsed.lines
     )
+
+    from apps.products.services import apply_aliases  # avoid circular import
+
+    apply_aliases(receipt)

@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.6
+- **Document version:** 0.7
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -16,6 +16,7 @@
 | 0.4 | 2026-11-10 | FR-01: dedicated mailbox with forwarded receipts, sync strategy, retries and concurrency. Data model: GmailMessage. |
 | 0.5 | 2026-11-10 | FR-01: forward as attachment (.eml). FR-02: older receipt layout, return receipts, store identified by store code. |
 | 0.6 | 2026-11-10 | Roadmap: web UI brought forward before product identification; until phase 3, products are grouped by receipt description. |
+| 0.7 | 2026-11-10 | FR-04: identification against a daily local copy of the whole catalogue (no remote search), matching algorithm and thresholds. FR-05: catalogue price history comes from the same daily download. |
 
 ---
 
@@ -156,6 +157,7 @@ If the receipt only shows the amount (quantity 1), unit price equals the amount.
 **API context:**
 
 - Reference endpoint: `https://tienda.mercadona.es/api/home/?lang=es&wh=svq1&postal_code=41008`
+- Endpoints used: `GET /api/categories/` (sections and categories) and `GET /api/categories/{id}/` (subcategories with their products and prices). The **whole catalogue (~4,300 products) is downloaded once a day** (~150 requests, ~1.5 minutes, 0.3 s between requests) and stored locally; identification runs locally against that copy, so no remote search endpoint is needed.
 - `postal_code` and `wh` (warehouse) determine prices and assortment. Both must be **configurable** (default `41008` / `svq1`).
 - The API is not public nor officially documented: it may change without notice. The integration must be isolated in a single module and be fault tolerant (if the API is down, the receipt is still stored and identification is retried later).
 - Requests must be rate limited and cached.
@@ -163,9 +165,9 @@ If the receipt only shows the amount (quantity 1), unit price equals the amount.
 **Identification process:**
 
 1. **Known alias:** if the receipt description already has an alias, it is used directly. No API call.
-2. **Automatic search:** otherwise the catalogue is searched using the normalised description (known abbreviations expanded, accents removed, etc.) and, when available, the paid price as a tie-breaker.
-3. **Confidence score:** each candidate gets a score.
-   - High confidence → linked automatically and alias created.
+2. **Automatic search:** otherwise the local catalogue is searched using the normalised description (accents removed, known abbreviations expanded: `LS` → Listo para Comer, `Q.` → Queso, `1/2` → Media, `P6` → Pack-6).
+3. **Confidence score:** each candidate gets `0.7 × text + 0.3 × price`. Text: weighted share of receipt tokens that are a prefix of a word in the product name or packaging (`DESN` → *desnatada*; plurals allowed; a long token never matches a short word it merely starts with). Price: closeness of the last paid price to the current catalogue price (per kg for weighed products), 0 at 25 % difference.
+   - High confidence (score ≥ 0.85 and ≥ 0.08 above the second candidate) → linked automatically and alias created.
    - Low confidence or several candidates → line stays **"Unidentified"**.
 4. **Manual review:** in an "Unidentified products" inbox the user sees the receipt description and the proposed candidates (name, photo, packaging, price) and can:
    - Confirm a candidate.
@@ -186,8 +188,8 @@ If the receipt only shows the amount (quantity 1), unit price equals the amount.
 
 **Description:** Besides the price the user paid (receipts), the catalogue price of identified products is stored periodically.
 
-- Daily job that fetches the current price of every product linked to Mercadona.
-- A new record is stored only when the price **changes** (or once a day — to be decided in design).
+- Prices come from the daily catalogue download (FR-04), for every product in the catalogue, bought or not.
+- A new record is stored only when the price **changes** (unit price or price per kg/L).
 - If a product leaves the catalogue it is flagged **"Discontinued"** without deleting its history.
 
 Each product therefore has two price series:
@@ -497,4 +499,4 @@ Gmail ──(sync_gmail)──> PDF stored
 - **Abbreviated descriptions:** automatic identification won't be perfect; the manual review inbox is essential.
 - **Receipt format variations:** collect several real PDFs (with discounts, returns, weighed products, different payment methods) for parser tests.
 - **Catalogue price vs. physical store:** the online price for warehouse `svq1` may differ from the physical store; that's why both series are stored separately.
-- **To decide:** store the catalogue price daily or only on change? Automatic database backups?
+- **To decide:** automatic database backups?

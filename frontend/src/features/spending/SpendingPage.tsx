@@ -1,8 +1,9 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useMonthly, useTopItems } from "../../api/queries";
+import { useCategories, useMonthly, useTopItems } from "../../api/queries";
 import type { TopItem } from "../../api/types";
 import { SpendBarChart } from "../../components/charts/SpendBarChart";
+import { ProductThumb, itemPath } from "../../components/ProductThumb";
 import { Card, EmptyState, Loading, PageHeader, StatTile } from "../../components/ui";
 import { currentMonthKey, monthRange, useFormatters } from "../../i18n/format";
 
@@ -16,8 +17,11 @@ function RankList({ items, metric }: { items: TopItem[]; metric: "spent" | "purc
   return (
     <ol className="rank">
       {items.map((item) => (
-        <li key={item.description}>
-          <Link to={`/products/${encodeURIComponent(item.description)}`}>{item.description}</Link>
+        <li key={item.key}>
+          <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <ProductThumb src={item.thumbnail} />
+            <Link to={itemPath(item)}>{item.name}</Link>
+          </span>
           <span className="num secondary">
             {metric === "spent" ? f.currency(item.spent) : t("spending.times", { count: item.purchases })}
           </span>
@@ -38,6 +42,7 @@ export function SpendingPage() {
   const month = params.get("month") ?? currentMonthKey();
   const monthly = useMonthly(range);
   const top = useTopItems(month);
+  const categories = useCategories(month);
 
   const set = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -116,6 +121,39 @@ export function SpendingPage() {
           {top.data ? <RankList items={top.data.by_purchases} metric="purchases" /> : <Loading rows={6} />}
         </Card>
       </div>
+
+      <Card title={t("spending.categoriesTitle")} subtitle={t("spending.categoriesSubtitle")}>
+        {categories.data ? (
+          categories.data.sections.length ? (
+            <ol className="rank">
+              {categories.data.sections.map((s) => (
+                <li key={s.section ?? "none"}>
+                  <span>
+                    {s.section ?? (
+                      <Link to="/review">{t("spending.unidentified")}</Link>
+                    )}
+                  </span>
+                  <span className="num secondary">
+                    {f.currency(s.spent)} · {f.percent(s.share, false)}
+                  </span>
+                  <span className="bar">
+                    <span
+                      style={{
+                        width: `${(Number(s.spent) / Number(categories.data.sections[0].spent)) * 100}%`,
+                        background: s.section ? undefined : "var(--muted)",
+                      }}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <EmptyState>{t("spending.noItems")}</EmptyState>
+          )
+        ) : (
+          <Loading rows={6} />
+        )}
+      </Card>
 
       <Card title={t("spending.tableTitle")}>
         <div className="table-wrap">
