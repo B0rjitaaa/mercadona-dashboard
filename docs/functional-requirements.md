@@ -67,8 +67,8 @@ A web application that runs locally (Docker) and:
 - Can be **triggered manually** from the UI ("Sync now").
 - Only processes emails matching a configurable filter (sender, subject and/or Gmail label). The filter lives in configuration, not in code.
 - Receipts are sent by **`Ticket Digital Mercadona <ticket_digital@mail.mercadona.com>`**. Default filter: `from:ticket_digital@mail.mercadona.com has:attachment filename:pdf`.
-- **Dedicated mailbox:** the recommended setup is a Gmail account used only for receipts. Receipts reach it via an automatic forwarding filter from the personal account (keeps the original sender) or by manual forwarding (sender becomes the personal address). In that setup the filter is `has:attachment filename:pdf`, and any non-receipt PDF ends up as a receipt in "Error" status.
-- An email may contain several PDFs; each one becomes a receipt.
+- **Dedicated mailbox:** the recommended setup is a Gmail account used only for receipts. Receipts reach it via an automatic forwarding filter from the personal account (keeps the original sender) or by manual forwarding (sender becomes the personal address). Past receipts can be sent in bulk with Gmail's **"Forward as attachment"**: one email carrying many `.eml` files, each with its PDF. In that setup the filter is `has:attachment`; PDFs are extracted from direct attachments and from attached emails (`.eml`, nested at any depth), and any non-receipt PDF ends up as a receipt in "Error" status.
+- An email may contain several PDFs (directly or inside attached emails); each one becomes a receipt.
 - Every run lists all matching message IDs and skips the ones already seen, so the first run is the historical import and later runs only download new emails.
 - A message that fails to download is retried on the next run.
 - Only one sync can run at a time (database lock); a concurrent request is skipped.

@@ -1,9 +1,12 @@
 """Thin wrapper around the Gmail API (read-only)."""
 
 import base64
+import email
+import quopri
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from email import policy
 from pathlib import Path
 
 from google.auth.transport.requests import Request
@@ -46,14 +49,74 @@ def load_credentials(token_file: str | Path) -> Credentials:
     return creds
 
 
-def iter_pdf_parts(payload: dict) -> Iterator[dict]:
-    """Yield every PDF part of a message payload, however deeply nested."""
+def _is_pdf(filename: str, mime: str) -> bool:
+    return filename.lower().endswith(".pdf") or mime == "application/pdf"
+
+
+def _is_email(filename: str, mime: str) -> bool:
+    return mime == "message/rfc822" or filename.lower().endswith(".eml")
+
+
+def iter_attachment_parts(payload: dict) -> Iterator[tuple[str, dict]]:
+    """Yield ("pdf" | "eml", part) for every relevant attachment, however deeply nested.
+
+    Receipts can arrive as a PDF attachment (direct or forwarded email) or inside an
+    attached email (.eml) when forwarded "as attachment". Gmail sometimes expands the
+    parts of an attached email and sometimes only gives the raw .eml: when the .eml is
+    downloadable as a whole we take it and do not descend into it, to avoid counting
+    its PDFs twice.
+    """
     filename = payload.get("filename") or ""
     mime = payload.get("mimeType", "")
-    if filename.lower().endswith(".pdf") or (filename and mime == "application/pdf"):
-        yield payload
+    has_body = bool(
+        payload.get("body", {}).get("attachmentId") or payload.get("body", {}).get("data")
+    )
+
+    if _is_email(filename, mime) and has_body:
+        yield "eml", payload
+        return
+    if filename and _is_pdf(filename, mime):
+        yield "pdf", payload
+        return
     for part in payload.get("parts", []) or []:
-        yield from iter_pdf_parts(part)
+        yield from iter_attachment_parts(part)
+
+
+def iter_pdf_parts(payload: dict) -> Iterator[dict]:
+    """Yield the PDF parts of a payload (attached emails excluded)."""
+    for kind, part in iter_attachment_parts(payload):
+        if kind == "pdf":
+            yield part
+
+
+def pdfs_from_eml(raw: bytes) -> list[Attachment]:
+    """Extract every PDF from a raw email (.eml), including emails attached inside it."""
+    return list(_pdfs_in_part(email.message_from_bytes(raw, policy=policy.default)))
+
+
+def _pdfs_in_part(part) -> Iterator[Attachment]:
+    filename = part.get_filename() or ""
+    ctype = part.get_content_type()
+
+    if _is_email(filename, ctype) and part.get_content_maintype() != "multipart":
+        encoding = (part.get("Content-Transfer-Encoding") or "").lower()
+        if encoding in ("base64", "quoted-printable"):
+            # The parser cannot see through an encoded attached email: decode it ourselves.
+            payload = part.get_payload()
+            encoded = payload[0].get_payload() if isinstance(payload, list) else payload
+            raw = (
+                base64.b64decode(encoded)
+                if encoding == "base64"
+                else quopri.decodestring(encoded.encode())
+            )
+            yield from pdfs_from_eml(raw)
+            return
+
+    if part.is_multipart():
+        for sub in part.get_payload():
+            yield from _pdfs_in_part(sub)
+    elif _is_pdf(filename, ctype) and (content := part.get_payload(decode=True)):
+        yield Attachment(filename=filename or "receipt.pdf", content=content)
 
 
 def _header(payload: dict, name: str) -> str:
@@ -93,23 +156,15 @@ class GmailClient:
         payload = raw.get("payload", {})
         internal_date = raw.get("internalDate")
 
-        attachments = []
-        for part in iter_pdf_parts(payload):
-            body = part.get("body", {})
-            if data := body.get("data"):
-                content = _decode(data)
-            elif attachment_id := body.get("attachmentId"):
-                attachment = (
-                    self.service.users()
-                    .messages()
-                    .attachments()
-                    .get(userId="me", messageId=message_id, id=attachment_id)
-                    .execute()
-                )
-                content = _decode(attachment["data"])
-            else:
+        attachments: list[Attachment] = []
+        for kind, part in iter_attachment_parts(payload):
+            content = self._part_content(message_id, part)
+            if content is None:
                 continue
-            attachments.append(Attachment(filename=part["filename"], content=content))
+            if kind == "eml":
+                attachments.extend(pdfs_from_eml(content))
+            else:
+                attachments.append(Attachment(filename=part["filename"], content=content))
 
         return Message(
             id=raw["id"],
@@ -121,3 +176,18 @@ class GmailClient:
             subject=_header(payload, "Subject"),
             attachments=attachments,
         )
+
+    def _part_content(self, message_id: str, part: dict) -> bytes | None:
+        body = part.get("body", {})
+        if data := body.get("data"):
+            return _decode(data)
+        if attachment_id := body.get("attachmentId"):
+            attachment = (
+                self.service.users()
+                .messages()
+                .attachments()
+                .get(userId="me", messageId=message_id, id=attachment_id)
+                .execute()
+            )
+            return _decode(attachment["data"])
+        return None
