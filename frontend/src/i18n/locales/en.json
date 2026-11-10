@@ -249,7 +249,7 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Gmail connection and job log",
+    "subtitle": "Gmail connection, weekly summary and job log",
     "gmailTitle": "Gmail",
     "credentials": "OAuth credentials",
     "yes": "Yes",
@@ -278,7 +278,8 @@
     "jobName": {
       "sync_gmail": "Gmail sync",
       "sync_catalog": "Catalogue",
-      "match_products": "Product matching"
+      "match_products": "Product matching",
+      "weekly_report": "Weekly summary"
     },
     "stat": {
       "messages_found": "emails",
@@ -296,7 +297,29 @@
       "checked": "checked",
       "auto_linked": "linked",
       "suggested": "with suggestions",
-      "no_candidates": "no candidates"
+      "no_candidates": "no candidates",
+      "sent": "sent",
+      "skipped": "skipped"
+    },
+    "reportTitle": "Weekly email summary",
+    "reportSubtitle": "The week's spending, price changes and what's pending, sent from the receipts account.",
+    "reportPreview": "Preview",
+    "reportSend": "Send now",
+    "reportQueued": "Sending…",
+    "reportRecipient": "Recipient",
+    "reportNoRecipient": "Not set: add REPORT_EMAIL_TO to the server's .env",
+    "reportScheduleValue": "Every {{day}} at {{time}}",
+    "reportCanSend": "Allowed to send",
+    "reportNeedsAuth": "No: authorise Gmail again (make gmail-auth)",
+    "reportLast": "Last sent",
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
     }
   },
   "review": {

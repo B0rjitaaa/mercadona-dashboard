@@ -13,6 +13,7 @@ import type {
   JobRun,
   MonthSpend,
   PriceWatch,
+  ReportStatus,
   Paginated,
   ReceiptDetail,
   ReceiptSummary,
@@ -238,6 +239,24 @@ export function useRematch() {
     onSuccess: () => {
       setTimeout(invalidate, 2000);
       setTimeout(invalidate, 8000);
+    },
+  });
+}
+
+export const useReportStatus = () =>
+  useQuery({
+    queryKey: ["report-status"],
+    queryFn: () => api.get<ReportStatus>("/reports/weekly/"),
+    refetchInterval: (query) => (query.state.data?.last_run?.status === "running" ? 2000 : false),
+  });
+
+export function useSendReport() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: () => api.post<{ task_id: string }>("/reports/weekly/send/"),
+    onSuccess: () => {
+      setTimeout(invalidate, 1500);
+      setTimeout(invalidate, 6000);
     },
   });
 }

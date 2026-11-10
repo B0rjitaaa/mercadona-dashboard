@@ -8,7 +8,7 @@ from apps.gmail_sync.client import SCOPES
 
 
 class Command(BaseCommand):
-    help = "Authorise read-only Gmail access (OAuth2) and store the token."
+    help = "Authorise Gmail access (read receipts, send the weekly report) and store the token."
 
     def add_arguments(self, parser):
         parser.add_argument("--port", type=int, default=8080)

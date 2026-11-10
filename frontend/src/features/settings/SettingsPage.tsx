@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useCatalogStatus, useCatalogSync, useGmailStatus, useJobs } from "../../api/queries";
+import { useCatalogStatus, useCatalogSync, useGmailStatus, useJobs, useReportStatus, useSendReport } from "../../api/queries";
 import { Icon } from "../../components/Icon";
 import { SyncButton } from "../../components/SyncButton";
 import { Card, Loading, PageHeader } from "../../components/ui";
@@ -14,6 +14,9 @@ export function SettingsPage() {
   const catalog = useCatalogStatus();
   const catalogSync = useCatalogSync();
   const c = catalog.data;
+  const report = useReportStatus();
+  const sendReport = useSendReport();
+  const r = report.data;
   const statLabel = (key: string) => t(`settings.stat.${key}`, { defaultValue: key });
 
   return (
@@ -65,6 +68,60 @@ export function SettingsPage() {
             <dd>{c.last_sync ? f.dateTime(c.last_sync.finished_at ?? c.last_sync.started_at) : t("settings.never")}</dd>
             <dt>{t("settings.schedule")}</dt>
             <dd>{t("settings.catalogScheduleValue")}</dd>
+          </dl>
+        ) : (
+          <Loading />
+        )}
+      </Card>
+
+      <Card
+        title={t("settings.reportTitle")}
+        subtitle={t("settings.reportSubtitle")}
+        actions={
+          <div className="filters">
+            <a className="btn" href="/api/reports/weekly/preview/" target="_blank" rel="noreferrer">
+              {t("settings.reportPreview")}
+            </a>
+            <button
+              onClick={() => sendReport.mutate()}
+              disabled={!r?.recipient || !r.can_send || sendReport.isPending || r.last_run?.status === "running"}
+            >
+              {sendReport.isSuccess ? t("settings.reportQueued") : t("settings.reportSend")}
+            </button>
+          </div>
+        }
+      >
+        {r ? (
+          <dl className="kv">
+            <dt>{t("settings.reportRecipient")}</dt>
+            <dd>{r.recipient ?? <span className="muted">{t("settings.reportNoRecipient")}</span>}</dd>
+            <dt>{t("settings.schedule")}</dt>
+            <dd>
+              {t("settings.reportScheduleValue", {
+                day: t(`settings.days.${r.schedule.day}`, { defaultValue: r.schedule.day }),
+                time: `${String(r.schedule.hour).padStart(2, "0")}:${String(r.schedule.minute).padStart(2, "0")}`,
+              })}
+            </dd>
+            <dt>{t("settings.reportCanSend")}</dt>
+            <dd>
+              <span className={`badge ${r.can_send ? "good" : "warning"}`}>
+                {r.can_send ? t("settings.yes") : t("settings.reportNeedsAuth")}
+              </span>
+            </dd>
+            <dt>{t("settings.reportLast")}</dt>
+            <dd>
+              {r.last_run ? (
+                <>
+                  {f.dateTime(r.last_run.finished_at ?? r.last_run.started_at)}{" "}
+                  <span className={`badge ${r.last_run.status === "success" ? "good" : r.last_run.status === "failed" ? "critical" : "info"}`}>
+                    {t(`job.${r.last_run.status}`)}
+                  </span>
+                  {r.last_run.error && <div className="muted" style={{ fontSize: 13 }}>{r.last_run.error}</div>}
+                </>
+              ) : (
+                t("settings.never")
+              )}
+            </dd>
           </dl>
         ) : (
           <Loading />

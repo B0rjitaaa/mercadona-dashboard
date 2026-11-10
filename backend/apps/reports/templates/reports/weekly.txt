@@ -1,0 +1,25 @@
+{% autoescape off %}{{ s.title }} · {{ period }}
+
+{{ s.week }}: {{ total }} ({{ receipts_count }})
+{% if vs_average %}{{ vs_average }}
+{% endif %}{{ month }}
+{% if receipts %}
+{{ s.tickets }}
+{% for r in receipts %}- {{ r.date }}: {{ r.total }}{% if r.is_return %} ({{ s.return }}){% endif %}
+{% endfor %}{% else %}
+{{ s.no_receipts }}
+{% endif %}{% if top %}
+{{ s.top }}
+{% for i in top %}- {{ i.name }}: {{ i.value }}
+{% endfor %}{% endif %}{% if price_changes %}
+{{ s.price_changes }}
+{% for i in price_changes %}- {{ i.name }}: {{ i.value }} ({{ i.pct }})
+{% endfor %}{% endif %}{% if alerts %}
+{{ s.alerts }}
+{% for i in alerts %}- {{ i.name }}: {{ i.value }} ({{ i.pct }}). {{ i.impact }}
+{% endfor %}{% endif %}{% if to_do %}
+{{ s.to_do }}
+{% for label, url in to_do %}- {{ label }}: {{ url }}
+{% endfor %}{% endif %}
+{{ s.open }}: {{ base_url }}
+{% endautoescape %}
