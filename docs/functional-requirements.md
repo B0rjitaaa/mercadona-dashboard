@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.4
+- **Document version:** 0.5
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -14,6 +14,7 @@
 | 0.2 | 2026-11-10 | Translated to English. Added language policy (NFR-09, NFR-10), multilingual UI (FR-12), architecture & project structure (section 7). |
 | 0.3 | 2026-11-10 | Gmail sender address (FR-01). Real receipt layout: VAT table and payment details (FR-02). Git branching model (NFR-11). Test fixture privacy (NFR-08). |
 | 0.4 | 2026-11-10 | FR-01: dedicated mailbox with forwarded receipts, sync strategy, retries and concurrency. Data model: GmailMessage. |
+| 0.5 | 2026-11-10 | FR-01: forward as attachment (.eml). FR-02: older receipt layout, return receipts, store identified by store code. |
 
 ---
 
@@ -102,6 +103,12 @@ A web application that runs locally (Docker) and:
 | VAT breakdown | `4% 9,13 0,36 9,49` (rate, base, tax, total per rate) |
 
 **Not stored:** card number digits, authorisation codes (`AUT`, `ARC`, `AID`) and card type printed below the VAT table.
+
+**Layout versions:** older receipts have no `Cnt.` column header (`Descripción P. Unit Importe`) and a 3-column VAT table without the per-rate total; the printed store address also varies (`CT DE …` / `CTRA. DE …`, city in upper or title case). Both layouts must be supported.
+
+**Store identification:** the first block of the invoice number is Mercadona's store code (`1234-001-000001` → store `1234`). Stores are identified by that code, not by the printed address.
+
+**Return receipts:** marked with a `***** DEVOLUCIÓN *****` banner, a `DEVOLUCIÓN: <number>` line instead of `FACTURA SIMPLIFICADA` and `FRA. SIMPLIF. ORIGEN: <number>` (the refunded sale). Lines have negative quantity and amount, and the total is negative. They are stored as receipts of kind `return`, with lines of type `return`, so they reduce the spend of their month.
 
 **Line types to support:**
 
