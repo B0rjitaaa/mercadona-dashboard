@@ -1,0 +1,24 @@
+{
+  "app": { "title": "Mercadona Dashboard" },
+  "nav": {
+    "dashboard": "Home",
+    "spending": "Monthly spending",
+    "receipts": "Receipts",
+    "products": "Products",
+    "review": "Unidentified",
+    "settings": "Settings"
+  },
+  "language": { "label": "Language", "es": "Español", "en": "English" },
+  "dashboard": {
+    "title": "Home",
+    "backend": "Backend",
+    "checking": "checking…",
+    "offline": "offline",
+    "online": "online"
+  },
+  "receipts": { "title": "Receipts" },
+  "products": { "title": "Products" },
+  "spending": { "title": "Monthly spending" },
+  "review": { "title": "Unidentified products" },
+  "settings": { "title": "Settings" }
+}

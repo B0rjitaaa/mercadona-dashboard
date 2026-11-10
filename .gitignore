@@ -1,0 +1,13 @@
+.env
+secrets/*
+!secrets/.gitkeep
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+backend/media/
+backend/staticfiles/
+node_modules/
+frontend/dist/
+.DS_Store
