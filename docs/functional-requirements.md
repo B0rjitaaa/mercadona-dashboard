@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.9
+- **Document version:** 0.10
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -19,6 +19,7 @@
 | 0.7 | 2026-11-10 | FR-04: identification against a daily local copy of the whole catalogue (no remote search), matching algorithm and thresholds. FR-05: catalogue price history comes from the same daily download. |
 | 0.8 | 2026-11-10 | FR-13: price watch (alerts vs last price paid, yearly impact, recent catalogue changes, personal inflation). |
 | 0.9 | 2026-11-10 | FR-14: dynamic filters (period and section on every analytics page, period comparison, product filters). Production deployment and daily backups (section 11). |
+| 0.10 | 2026-11-10 | FR-15: weekly email summary (Gmail send scope). Backups through the server's own backup system, built-in service optional. |
 
 ---
 
@@ -81,7 +82,7 @@ A web application that runs locally (Docker) and:
 - An already processed email **never creates a duplicate receipt** (checked by Gmail message ID and by simplified-invoice number).
 - Optionally, processed emails get a Gmail label (e.g. `mercadona/processed`).
 - First run performs a **historical import** (all matching emails), not just the last day.
-- Gmail access uses OAuth2 with **read-only** scope (plus label modification if labelling is enabled).
+- Gmail access uses OAuth2 with **read-only** scope to import receipts, plus **send** for the weekly summary (FR-15). Tokens authorised with read-only access keep importing; only the summary needs the new authorisation.
 
 **Run log:** each sync stores date, emails found, receipts created, duplicates skipped and errors.
 
@@ -313,6 +314,16 @@ Screen (or environment variables) for:
 - **Compare:** period A against baseline B — this month vs the same days last year, last month vs the one before, year to date vs the same dates last year, last 3 months vs the 3 before, or custom dates. Shows both totals, the difference, spend per section and the items that explain the change. Each item's change is split into a **price effect** (A quantity × change in average price) and a **quantity effect** (the rest); items bought in only one period are marked as new or dropped.
 - **Products:** besides search and sort, filter by identified / unidentified, minimum number of purchases and price trend (up / down) within the period.
 
+### FR-15 · Weekly email summary
+
+**Description:** Once a week (Monday 09:00 by default: `REPORT_DAY`, `REPORT_HOUR`, `REPORT_MINUTE`) an email is sent from the receipts Gmail account to `REPORT_EMAIL_TO`. Nothing is sent while the recipient is empty.
+
+- Covers the 7 days before it runs: spend and receipts of the week, change against the average of the 4 previous weeks, month to date, list of receipts, top 5 items by spend.
+- **Prices:** catalogue price changes of the week for regular products, and the regular products dearer now than when last bought (FR-13).
+- **To do:** new unidentified products, product links worth checking, receipts to review or with errors, and jobs that failed during the week.
+- HTML (inline styles, readable in any client) plus a plain-text part; language `REPORT_LANGUAGE` (es / en); links point to `REPORT_BASE_URL`.
+- Settings shows the masked recipient, the schedule, whether the Gmail token can send, the last send, a preview and a "Send now" button. Every send is a job run.
+
 ---
 
 ## 5. Non-functional requirements
@@ -514,6 +525,7 @@ Gmail ──(sync_gmail)──> PDF stored
 | **4 · Analytics & UI** | Monthly spend, product page with charts, dashboard, multilingual UI (FR-06, FR-07, FR-09, FR-10, FR-12). **Brought forward before phase 3**: products are grouped by receipt description until they are linked to the catalogue; category breakdown (FR-07) and catalogue price (FR-06) arrive with phases 3 and 5. |
 | **5 · Prices** | Daily catalogue price tracking and alerts (FR-05, FR-13). |
 | **6 · Filters & deployment** | Dynamic filters and period comparison (FR-14). Production stack on a home server with daily backups (`docs/deployment.md`). |
+| **7 · Notifications** | Weekly email summary (FR-15). |
 
 ---
 
@@ -524,4 +536,4 @@ Gmail ──(sync_gmail)──> PDF stored
 - **Abbreviated descriptions:** automatic identification won't be perfect; the manual review inbox is essential.
 - **Receipt format variations:** collect several real PDFs (with discounts, returns, weighed products, different payment methods) for parser tests.
 - **Catalogue price vs. physical store:** the online price for warehouse `svq1` may differ from the physical store; that's why both series are stored separately.
-- **Backups:** daily on the production server (database + PDFs, 14 days kept) on the same disk; copying them elsewhere is still manual.
+- **Backups:** daily on the production server (database + PDFs), verified and copied to another machine on the network by the server's backup system.

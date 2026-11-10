@@ -1,4 +1,4 @@
-"""Thin wrapper around the Gmail API (read-only)."""
+"""Thin wrapper around the Gmail API: read receipts, send the weekly report."""
 
 import base64
 import email
@@ -7,13 +7,18 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from email import policy
+from email.message import EmailMessage
 from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+READ_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send"
+# Requested by `make gmail-auth`. Tokens authorised before the weekly report only have
+# READ_SCOPE: they keep importing receipts, and sending reports needs a new authorisation.
+SCOPES = [READ_SCOPE, SEND_SCOPE]
 
 
 class GmailNotAuthorisedError(Exception):
@@ -40,13 +45,25 @@ def load_credentials(token_file: str | Path) -> Credentials:
     path = Path(token_file)
     if not path.exists():
         raise GmailNotAuthorisedError(f"Token not found at {path}. Run `make gmail-auth`.")
-    creds = Credentials.from_authorized_user_file(str(path), SCOPES)
+    # Use the scopes stored in the token: asking for more on refresh would fail
+    creds = Credentials.from_authorized_user_file(str(path))
     if not creds.valid:
         if not (creds.expired and creds.refresh_token):
             raise GmailNotAuthorisedError("Token is invalid. Run `make gmail-auth` again.")
         creds.refresh(Request())
         path.write_text(creds.to_json())
     return creds
+
+
+def granted_scopes(token_file: str | Path) -> set[str]:
+    """Scopes the stored token was authorised for (empty when there is no token)."""
+    path = Path(token_file)
+    if not path.exists():
+        return set()
+    try:
+        return set(Credentials.from_authorized_user_file(str(path)).scopes or [])
+    except ValueError:
+        return set()
 
 
 def _is_pdf(filename: str, mime: str) -> bool:
@@ -191,3 +208,14 @@ class GmailClient:
             )
             return _decode(attachment["data"])
         return None
+
+    def send_email(self, to: str, subject: str, text: str, html: str) -> str:
+        """Send an email from the authorised account. Returns the Gmail message id."""
+        message = EmailMessage()
+        message["To"] = to
+        message["Subject"] = subject
+        message.set_content(text)
+        message.add_alternative(html, subtype="html")
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        sent = self.service.users().messages().send(userId="me", body={"raw": raw}).execute()
+        return sent["id"]

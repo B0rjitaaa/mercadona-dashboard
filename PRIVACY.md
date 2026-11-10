@@ -1,6 +1,6 @@
 # Privacy Policy
 
-_Last updated: 10 November 2026_
+_Last updated: 10 November 2026 (weekly summary)_
 
 Mercadona Dashboard ("the app") is an open-source, self-hosted application that tracks
 supermarket spending from digital receipts. This policy explains how it handles data
@@ -14,14 +14,15 @@ receive, see or store any user data.
 
 ## Google user data accessed
 
-The app requests a single OAuth scope:
+The app requests two OAuth scopes:
 
 | Scope | Purpose |
 |---|---|
 | `https://www.googleapis.com/auth/gmail.readonly` | Find emails that contain receipt PDFs and download those attachments. |
+| `https://www.googleapis.com/auth/gmail.send` | Send the optional weekly spending summary to the single address the user configures (`REPORT_EMAIL_TO`). |
 
-The app **cannot** send, delete, move or modify emails, and it does not access any other
-Google service.
+The app **cannot** delete, move or modify emails. It sends nothing unless the user sets a
+recipient, and then only the weekly summary. It does not access any other Google service.
 
 ## How the data is used
 
@@ -40,8 +41,9 @@ Google service.
   running the app.
 - No data is sent to the app authors or to any third party, and no data is used for
   advertising or sold.
-- The only external services the app talks to are Google's Gmail API (to read receipts)
-  and Mercadona's public online-shop API (to look up product information; no personal
+- The only external services the app talks to are Google's Gmail API (to read receipts
+  and, if configured, send the weekly summary to the user's own address) and Mercadona's
+  public online-shop API (to look up product information; no personal
   data is sent).
 
 ## Compliance with Google API Services User Data Policy

@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>{{ s.title }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f2ee;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0b0b0b;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f2ee;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fcfcfb;border:1px solid #e1e0d9;border-radius:10px;">
+
+<tr><td style="padding:24px 24px 8px;">
+  <div style="font-size:13px;color:#52514e;">{{ s.title }} · {{ period }}</div>
+  <div style="font-size:13px;color:#52514e;margin-top:16px;">{{ s.week }}</div>
+  <div style="font-size:32px;font-weight:600;letter-spacing:-0.02em;margin-top:2px;">{{ total }}</div>
+  <div style="font-size:13px;color:#898781;margin-top:2px;">{{ receipts_count }}</div>
+  {% if vs_average %}<div style="font-size:13px;margin-top:8px;color:{% if up %}#b42f2f{% else %}#006300{% endif %};">{{ vs_average }}</div>{% endif %}
+  <div style="font-size:13px;color:#52514e;margin-top:4px;">{{ month }}</div>
+</td></tr>
+
+{% if receipts %}
+<tr><td style="padding:16px 24px 0;">
+  <div style="font-size:15px;font-weight:600;margin-bottom:6px;">{{ s.tickets }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+  {% for r in receipts %}
+    <tr>
+      <td style="padding:6px 0;border-bottom:1px solid #eeede8;"><a href="{{ r.url }}" style="color:#1c5cab;text-decoration:none;">{{ r.date }}</a>{% if r.is_return %} <span style="color:#898781;">({{ s.return }})</span>{% endif %}</td>
+      <td align="right" style="padding:6px 0;border-bottom:1px solid #eeede8;font-variant-numeric:tabular-nums;">{{ r.total }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</td></tr>
+{% else %}
+<tr><td style="padding:16px 24px 0;font-size:14px;color:#52514e;">{{ s.no_receipts }}</td></tr>
+{% endif %}
+
+{% if top %}
+<tr><td style="padding:20px 24px 0;">
+  <div style="font-size:15px;font-weight:600;margin-bottom:6px;">{{ s.top }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+  {% for i in top %}
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #eeede8;"><a href="{{ i.url }}" style="color:#1c5cab;text-decoration:none;">{{ i.name }}</a></td>
+      <td align="right" style="padding:6px 0;border-bottom:1px solid #eeede8;white-space:nowrap;font-variant-numeric:tabular-nums;">{{ i.value }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</td></tr>
+{% endif %}
+
+{% if price_changes %}
+<tr><td style="padding:20px 24px 0;">
+  <div style="font-size:15px;font-weight:600;">{{ s.price_changes }}</div>
+  <div style="font-size:13px;color:#898781;margin:2px 0 6px;">{{ s.price_changes_hint }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+  {% for i in price_changes %}
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #eeede8;"><a href="{{ i.url }}" style="color:#1c5cab;text-decoration:none;">{{ i.name }}</a><div style="font-size:12px;color:#898781;">{{ i.value }}</div></td>
+      <td align="right" style="padding:6px 0;border-bottom:1px solid #eeede8;white-space:nowrap;font-weight:600;color:{% if i.up %}#b42f2f{% else %}#006300{% endif %};">{% if i.up %}▲{% else %}▼{% endif %} {{ i.pct }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</td></tr>
+{% endif %}
+
+{% if alerts %}
+<tr><td style="padding:20px 24px 0;">
+  <div style="font-size:15px;font-weight:600;margin-bottom:6px;">{{ s.alerts }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+  {% for i in alerts %}
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #eeede8;"><a href="{{ i.url }}" style="color:#1c5cab;text-decoration:none;">{{ i.name }}</a><div style="font-size:12px;color:#898781;">{{ i.value }} · {{ i.impact }}</div></td>
+      <td align="right" style="padding:6px 0;border-bottom:1px solid #eeede8;white-space:nowrap;font-weight:600;color:#b42f2f;">▲ {{ i.pct }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</td></tr>
+{% endif %}
+
+{% if to_do %}
+<tr><td style="padding:20px 24px 0;">
+  <div style="font-size:15px;font-weight:600;margin-bottom:6px;">{{ s.to_do }}</div>
+  {% for label, url in to_do %}
+    <div style="font-size:14px;padding:4px 0;">• <a href="{{ url }}" style="color:#1c5cab;text-decoration:none;">{{ label }}</a></div>
+  {% endfor %}
+</td></tr>
+{% endif %}
+
+<tr><td style="padding:24px;">
+  <a href="{{ base_url }}" style="display:inline-block;background:#2a78d6;color:#ffffff;text-decoration:none;font-weight:500;font-size:14px;padding:10px 16px;border-radius:6px;">{{ s.open }}</a>
+</td></tr>
+</table>
+<div style="max-width:560px;font-size:12px;color:#898781;padding:12px 8px 0;">{{ s.footer }}</div>
+</td></tr>
+</table>
+</body>
+</html>

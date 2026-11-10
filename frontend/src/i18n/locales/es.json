@@ -249,7 +249,7 @@
   },
   "settings": {
     "title": "Ajustes",
-    "subtitle": "Conexión con Gmail y registro de tareas",
+    "subtitle": "Conexión con Gmail, resumen semanal y registro de tareas",
     "gmailTitle": "Gmail",
     "credentials": "Credenciales OAuth",
     "yes": "Sí",
@@ -278,7 +278,8 @@
     "jobName": {
       "sync_gmail": "Sincronización Gmail",
       "sync_catalog": "Catálogo",
-      "match_products": "Identificación de productos"
+      "match_products": "Identificación de productos",
+      "weekly_report": "Resumen semanal"
     },
     "stat": {
       "messages_found": "correos",
@@ -296,7 +297,29 @@
       "checked": "revisadas",
       "auto_linked": "enlazadas",
       "suggested": "con sugerencias",
-      "no_candidates": "sin candidatos"
+      "no_candidates": "sin candidatos",
+      "sent": "enviados",
+      "skipped": "omitido"
+    },
+    "reportTitle": "Resumen semanal por email",
+    "reportSubtitle": "Gasto de la semana, cambios de precio y lo que queda pendiente, enviado desde la cuenta de tickets.",
+    "reportPreview": "Vista previa",
+    "reportSend": "Enviar ahora",
+    "reportQueued": "Enviando…",
+    "reportRecipient": "Destinatario",
+    "reportNoRecipient": "Sin configurar: pon REPORT_EMAIL_TO en el .env del servidor",
+    "reportScheduleValue": "Cada {{day}} a las {{time}}",
+    "reportCanSend": "Permiso para enviar",
+    "reportNeedsAuth": "No: vuelve a autorizar Gmail (make gmail-auth)",
+    "reportLast": "Último envío",
+    "days": {
+      "mon": "lunes",
+      "tue": "martes",
+      "wed": "miércoles",
+      "thu": "jueves",
+      "fri": "viernes",
+      "sat": "sábado",
+      "sun": "domingo"
     }
   },
   "review": {

@@ -26,4 +26,13 @@ app.conf.beat_schedule = {
             minute=int(os.environ.get("GMAIL_SYNC_MINUTE", "0")),
         ),
     },
+    # Skipped (logged) while REPORT_EMAIL_TO is empty
+    "weekly-report": {
+        "task": "reports.weekly_report",
+        "schedule": crontab(
+            day_of_week=os.environ.get("REPORT_DAY", "mon"),
+            hour=int(os.environ.get("REPORT_HOUR", "9")),
+            minute=int(os.environ.get("REPORT_MINUTE", "0")),
+        ),
+    },
 }

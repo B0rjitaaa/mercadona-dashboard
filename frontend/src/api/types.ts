@@ -297,3 +297,11 @@ export interface PriceWatch {
   recent_days: number;
   rules: { min_purchases: number; within_days: number; min_pct: string; suspicious_pct: string };
 }
+
+export interface ReportStatus {
+  /** Masked address, or null when REPORT_EMAIL_TO is empty */
+  recipient: string | null;
+  schedule: { day: string; hour: number; minute: number };
+  can_send: boolean;
+  last_run: JobRun | null;
+}

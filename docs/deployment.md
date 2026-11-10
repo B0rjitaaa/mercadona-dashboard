@@ -54,6 +54,16 @@ make prod-logs    # follow logs
 
 Open `http://<server-ip>:8080` (port set by `WEB_PORT`).
 
+## Weekly email summary
+
+Set `REPORT_EMAIL_TO` (and optionally `REPORT_DAY`, `REPORT_HOUR`, `REPORT_BASE_URL`) in
+`.env` and run `make prod-up`. Sending needs a Gmail token with send permission; tokens
+created before the summary existed can only read. Authorise again where you have a browser
+(the OAuth redirect goes to `localhost`), e.g. on the development machine with
+`make gmail-auth`, then copy `secrets/token.json` to the server and restart `worker`.
+Settings → "Weekly email summary" shows whether the token can send, a preview and a
+"Send now" button.
+
 ## Updating
 
 ```bash

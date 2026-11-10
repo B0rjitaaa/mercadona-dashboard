@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "apps.mercadona",
     "apps.products",
     "apps.analytics",
+    "apps.reports",
 ]
 
 MIDDLEWARE = [
@@ -110,3 +111,11 @@ GMAIL_QUERY = os.environ.get(
 MERCADONA_BASE_URL = "https://tienda.mercadona.es/api"
 MERCADONA_POSTAL_CODE = os.environ.get("MERCADONA_POSTAL_CODE", "41008")
 MERCADONA_WAREHOUSE = os.environ.get("MERCADONA_WAREHOUSE", "svq1")
+
+# Weekly email report (FR-15). Empty recipient = not sent.
+REPORT_EMAIL_TO = os.environ.get("REPORT_EMAIL_TO", "")
+REPORT_DAY = os.environ.get("REPORT_DAY", "mon")
+REPORT_HOUR = int(os.environ.get("REPORT_HOUR", "9"))
+REPORT_MINUTE = int(os.environ.get("REPORT_MINUTE", "0"))
+REPORT_LANGUAGE = os.environ.get("REPORT_LANGUAGE", "es")
+REPORT_BASE_URL = os.environ.get("REPORT_BASE_URL", "http://localhost:5173")
