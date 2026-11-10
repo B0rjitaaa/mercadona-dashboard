@@ -32,6 +32,6 @@ make migrate         # apply migrations
 - Everything is written in English except the UI, which is multilingual (`frontend/src/i18n/locales`).
 - Conventional Commits (`feat:`, `fix:`, `chore:`…).
 - Branches: `feature/*` → `develop` → `main` (only when lint and tests pass).
-- Real receipt PDFs go in `backend/apps/receipts/tests/fixtures/private/` (git-ignored). Run
-  `docker compose exec backend python -m apps.receipts.tests.anonymise_fixtures` to create
-  their anonymised text fixtures.
+- Real receipts never go into git. PDFs go in `backend/apps/receipts/tests/fixtures/private/`;
+  run `docker compose exec backend python -m apps.receipts.tests.anonymise_fixtures` to create
+  their anonymised text versions (also git-ignored) used by local tests.

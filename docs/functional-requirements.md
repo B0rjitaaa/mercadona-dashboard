@@ -287,7 +287,7 @@ Screen (or environment variables) for:
 | NFR-05 | **Traceability:** the original PDF of each receipt and the log of every job run are kept. |
 | NFR-06 | **Monetary precision:** every amount is stored as an exact decimal. |
 | NFR-07 | **Extensibility:** the data model allows other supermarkets in the future (store chain as its own entity, one parser per chain). |
-| NFR-08 | **Quality:** automated parser tests against real receipts covering every line type. Real PDFs are kept locally in a git-ignored folder (they contain card digits); an anonymised text version of each one is committed so tests always run. Lint (`ruff`) and tests must pass before merging. |
+| NFR-08 | **Quality:** automated parser tests against real receipts covering every line type. Real receipts (PDFs and their anonymised text versions) are kept locally in git-ignored folders, since even without card data they reveal purchase history and location and the repository is public; their tests are skipped when absent. Committed fixtures are synthetic. Lint (`ruff`) and tests must pass before merging. |
 | NFR-09 | **Project language:** everything except the frontend UI is written in **English**: code, identifiers, comments, docstrings, API fields, log messages, documentation, commit messages and pull requests. |
 | NFR-10 | **UI language:** the frontend is multilingual (see FR-12). No user-facing text is hard-coded in components; it always goes through translation files. |
 | NFR-11 | **Version control:** commits are authored by the repository owner (Borja), Conventional Commits style (`feat:`, `fix:`, `chore:`…). Branching model: `feature/*` → `develop` → `main`. Features are merged into `develop`; `develop` is merged into `main` only when lint and tests pass. |
