@@ -2,7 +2,7 @@
 
 Self-hosted platform to track supermarket spending from the digital Mercadona receipts that arrive in Gmail.
 
-See [docs/functional-requirements.md](docs/functional-requirements.md) for the full specification.
+See [docs/functional-requirements.md](docs/functional-requirements.md) for the full specification and [PRIVACY.md](PRIVACY.md) for the privacy policy.
 
 ## Quick start
 
