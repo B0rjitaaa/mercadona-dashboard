@@ -33,7 +33,9 @@ export function Layout() {
     <div className="app">
       <div className="topbar">
         <span className="brand" style={{ padding: 0 }}>
-          <span className="brand-mark">M</span>
+          <span className="brand-mark">
+            <Icon name="basket" size={18} />
+          </span>
           {t("app.title")}
         </span>
         <button className="btn-ghost" onClick={() => setOpen(true)} aria-label={t("nav.open")}>
@@ -43,7 +45,9 @@ export function Layout() {
 
       <nav className={`sidebar ${open ? "open" : ""}`} aria-label={t("nav.label")}>
         <div className="brand">
-          <span className="brand-mark">M</span>
+          <span className="brand-mark">
+            <Icon name="basket" size={18} />
+          </span>
           <span style={{ flex: 1 }}>{t("app.title")}</span>
           {open && (
             <button className="btn-ghost" onClick={() => setOpen(false)} aria-label={t("nav.close")}>
