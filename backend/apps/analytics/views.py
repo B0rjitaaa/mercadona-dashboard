@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from apps.core.models import JobRun
 from apps.core.serializers import JobRunSerializer
 
-from . import services
+from . import prices, services
 
 
 def _json(value):
@@ -89,3 +89,12 @@ def categories(request):
     """?month=YYYY-MM (default: all time)."""
     month = request.query_params.get("month")
     return Response(_json(services.categories(_parse_month(month) if month else None)))
+
+
+@api_view(["GET"])
+def price_watch(request):
+    """?days=30: window for "recent catalogue changes"."""
+    value = request.query_params.get("days", "30")
+    if not value.isdigit() or not 1 <= int(value) <= 365:
+        raise ValidationError({"days": "Expected a number between 1 and 365."})
+    return Response(_json(prices.price_watch(int(value))))
