@@ -1,7 +1,8 @@
-.PHONY: up down build logs migrate makemigrations shell superuser test lint gmail-auth
+.PHONY: up up-jobs down build logs migrate makemigrations shell superuser test lint gmail-auth
 
 up:            ; docker compose up -d
-down:          ; docker compose down
+up-jobs:       ; docker compose --profile jobs up -d
+down:          ; docker compose --profile jobs down
 build:         ; docker compose build
 logs:          ; docker compose logs -f
 migrate:       ; docker compose exec backend python manage.py migrate

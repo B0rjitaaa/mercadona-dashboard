@@ -11,6 +11,9 @@ cp .env.example .env
 make up            # docker compose up -d
 ```
 
+The development stack does not start Celery (`worker`, `beat`): the daily jobs run on the
+production server. Use `make up-jobs` to start them locally when working on tasks.
+
 | Service | URL |
 |---|---|
 | Frontend | http://localhost:5173 |

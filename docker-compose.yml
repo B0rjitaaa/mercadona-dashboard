@@ -36,12 +36,16 @@ services:
     ports:
       - "${BACKEND_HOST_PORT:-8001}:8000"
 
+  # Scheduled jobs run on the production server; start them here only when needed:
+  # make up-jobs
   worker:
     <<: *backend
+    profiles: ["jobs"]
     command: celery -A config worker -l info
 
   beat:
     <<: *backend
+    profiles: ["jobs"]
     command: celery -A config beat -l info
 
   frontend:
