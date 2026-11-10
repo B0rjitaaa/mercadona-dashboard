@@ -137,8 +137,8 @@ def test_unrecognised_lines_become_warnings(sample_text):
     "text, message",
     [
         ("hello world", "Items header"),
-        ("Cnt. Descripción\n1 PAN 1,00\nTOTAL (€) 1,00", "invoice number"),
-        ("FACTURA SIMPLIFICADA: 1-1-1\nCnt. Descripción\n1 PAN 1,00", "TOTAL"),
+        ("Cnt. Descripción P. Unit Importe\n1 PAN 1,00\nTOTAL (€) 1,00", "invoice number"),
+        ("FACTURA SIMPLIFICADA: 1-1-1\nCnt. Descripción P. Unit Importe\n1 PAN 1,00", "TOTAL"),
     ],
 )
 def test_invalid_documents(text, message):
@@ -151,3 +151,86 @@ def test_invalid_documents(text, message):
 )
 def test_to_decimal(value, expected):
     assert to_decimal(value) == D(expected)
+
+
+OLD_FORMAT = """
+MERCADONA, S.A. A-46103834
+CTRA. EJEMPLO, 1
+28001 Madrid
+TELÉFONO: 910000000
+20/03/2025 18:00 OP: 2000002
+FACTURA SIMPLIFICADA: 1234-002-000002
+Descripción P. Unit Importe
+1 LIMON 1,85
+2 ESPINACAS 1,24 2,48
+1 PLATANO
+1,242 kg 2,30 €/kg 2,86
+TOTAL (€) 7,19
+TARJETA BANCARIA 7,19
+IVA BASE IMPONIBLE (€) CUOTA (€)
+4% 6,91 0,28
+TOTAL 6,91 0,28
+TARJ. BANCARIA: **** **** **** 0000
+N.C: 000000000 AUT: 000000
+"""
+
+
+def test_old_format_without_cnt_column():
+    receipt = parse_text(OLD_FORMAT)
+
+    assert receipt.totals_match
+    assert receipt.warnings == []
+    assert len(receipt.lines) == 3
+    assert receipt.store_address == "CTRA. EJEMPLO, 1"
+    assert receipt.city == "Madrid"
+    assert receipt.store_code == "1234"
+    assert receipt.vat_breakdown[0].total is None  # old VAT table has no total column
+
+
+RETURN_RECEIPT = """
+MERCADONA, S.A. A-46103834
+***** DEVOLUCIÓN *****
+CALLE EJEMPLO, 1
+28001 MADRID
+TELÉFONO: 910000000
+14/09/2026 12:03 OP: 1000001
+DEVOLUCIÓN: 1234-003-000003
+FRA. SIMPLIF. ORIGEN: 1234-001-000001
+Cnt. Descripción P. Unit Importe
+-1 RESERVA LONCHAS 25,00 -4,50
+TOTAL (€) -4,50
+TARJETA BANCARIA -4,50
+IVA BASE IMP. (€) CUOTA (€) TOTAL (€)
+10% -4,09 -0,41 -4,50
+TOTAL -4,09 -0,41 -4,50
+"""
+
+
+def test_return_receipt():
+    from apps.receipts.parsing import ReceiptKind
+
+    receipt = parse_text(RETURN_RECEIPT)
+
+    assert receipt.kind == ReceiptKind.RETURN
+    assert receipt.invoice_number == "1234-003-000003"
+    assert receipt.original_invoice_number == "1234-001-000001"
+    assert receipt.store_address == "CALLE EJEMPLO, 1"  # banner line skipped
+    assert receipt.total == D("-4.50")
+    assert receipt.totals_match
+    [line] = receipt.lines
+    assert line.line_type == LineType.RETURN
+    assert line.description == "RESERVA LONCHAS"
+    assert line.quantity == D("-1")
+    assert line.unit_price == D("4.50")
+    assert line.amount == D("-4.50")
+    assert receipt.vat_breakdown[0].total == D("-4.50")
+
+
+def test_sale_is_default_kind(sample_text):
+    from apps.receipts.parsing import ReceiptKind
+
+    receipt = parse_text(sample_text)
+
+    assert receipt.kind == ReceiptKind.SALE
+    assert receipt.original_invoice_number == ""
+    assert receipt.store_code == "1234"

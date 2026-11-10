@@ -19,7 +19,7 @@ class ReceiptViewSet(
 ):
     """Receipts (FR-02, FR-03, FR-08).
 
-    Query params for the list: status, store, date_from, date_to (YYYY-MM-DD), search.
+    Query params for the list: status, kind, store, date_from, date_to (YYYY-MM-DD), search.
     """
 
     def get_serializer_class(self):
@@ -41,6 +41,8 @@ class ReceiptViewSet(
         params = self.request.query_params
         if value := params.get("status"):
             qs = qs.filter(status=value)
+        if value := params.get("kind"):
+            qs = qs.filter(kind=value)
         if value := params.get("store"):
             qs = qs.filter(store_id=value)
         if value := parse_date(params.get("date_from", "")):

@@ -5,7 +5,7 @@ from .models import Receipt, ReceiptLine, Store
 
 @admin.register(Store)
 class StoreAdmin(admin.ModelAdmin):
-    list_display = ["address", "postal_code", "city", "chain"]
+    list_display = ["code", "address", "postal_code", "city", "chain"]
     search_fields = ["address", "city", "postal_code"]
 
 
@@ -17,8 +17,8 @@ class ReceiptLineInline(admin.TabularInline):
 
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
-    list_display = ["invoice_number", "issued_at", "store", "total", "status", "source"]
-    list_filter = ["status", "source", "store"]
+    list_display = ["invoice_number", "kind", "issued_at", "store", "total", "status", "source"]
+    list_filter = ["status", "kind", "source", "store"]
     search_fields = ["invoice_number", "lines__description"]
     date_hierarchy = "issued_at"
     readonly_fields = ["pdf_sha256", "created_at", "updated_at", "parsed_at"]

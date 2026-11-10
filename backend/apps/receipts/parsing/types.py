@@ -6,9 +6,15 @@ from decimal import Decimal
 from enum import StrEnum
 
 
+class ReceiptKind(StrEnum):
+    SALE = "sale"
+    RETURN = "return"
+
+
 class LineType(StrEnum):
     PRODUCT = "product"
     DISCOUNT = "discount"
+    RETURN = "return"
     OTHER = "other"
 
 
@@ -47,11 +53,18 @@ class ParsedReceipt:
     issued_at: datetime | None = None  # naive, local time as printed on the receipt
     operation_number: str = ""
     invoice_number: str = ""
+    kind: ReceiptKind = ReceiptKind.SALE
+    original_invoice_number: str = ""  # for returns: the sale being refunded
     total: Decimal | None = None
     payment_method: str = ""
     lines: list[ParsedLine] = field(default_factory=list)
     vat_breakdown: list[VatRate] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+
+    @property
+    def store_code(self) -> str:
+        """Mercadona store number: first block of the invoice number ('1234-001-...')."""
+        return self.invoice_number.split("-")[0] if "-" in self.invoice_number else ""
 
     @property
     def lines_total(self) -> Decimal:
