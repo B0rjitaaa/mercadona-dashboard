@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useMonthly, useReceipts, useSummary } from "../../api/queries";
+import { useMonthly, usePriceWatch, useReceipts, useSummary } from "../../api/queries";
+import { ItemCell } from "../../components/ItemCell";
 import { SpendBarChart } from "../../components/charts/SpendBarChart";
 import { ReceiptsTable } from "../../components/ReceiptsTable";
 import { SyncButton } from "../../components/SyncButton";
@@ -14,6 +15,7 @@ export function DashboardPage() {
   const summary = useSummary();
   const monthly = useMonthly("12");
   const latest = useReceipts({ page: 1 });
+  const prices = usePriceWatch();
 
   const s = summary.data;
   const current = s ? Number(s.current_month.total) : 0;
@@ -38,7 +40,7 @@ export function DashboardPage() {
         {s ? (
           <>
             <StatTile
-              label={t("dashboard.thisMonth", { month: f.monthLong(s.current_month.month) })}
+              label={t("dashboard.thisMonth", { month: f.monthLong(s.current_month.month, false) })}
               value={f.currency(current)}
               foot={
                 <>
@@ -48,7 +50,7 @@ export function DashboardPage() {
               }
             />
             <StatTile
-              label={t("dashboard.lastMonth", { month: f.monthLong(s.previous_month.month) })}
+              label={t("dashboard.lastMonth", { month: f.monthLong(s.previous_month.month, false) })}
               value={f.currency(previous)}
               foot={t("dashboard.receiptsCount", { count: s.previous_month.receipts })}
             />
@@ -118,6 +120,34 @@ export function DashboardPage() {
           <SyncButton primary />
         </Card>
       </div>
+
+      <Card
+        title={t("dashboard.priceAlerts")}
+        subtitle={t("dashboard.priceAlertsSubtitle")}
+        actions={<Link to="/prices">{t("dashboard.seeAll")}</Link>}
+      >
+        {!prices.data && <Loading rows={4} />}
+        {prices.data && prices.data.alerts.length === 0 && <p className="muted">{t("prices.noAlerts")}</p>}
+        {prices.data && prices.data.alerts.length > 0 && (
+          <div className="table-wrap">
+            <table>
+              <tbody>
+                {prices.data.alerts.slice(0, 5).map((a) => (
+                  <tr key={a.key}>
+                    <td className="wrap"><ItemCell item={a} /></td>
+                    <td className="right num secondary">
+                      {t("prices.paidVsNow", { paid: f.currency(a.last_paid), now: f.currency(a.catalog_price) })}
+                    </td>
+                    <td className="right num">
+                      <Delta value={Number(a.diff_pct)} label={f.percent(a.diff_pct ?? 0)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       <Card title={t("dashboard.latestReceipts")} actions={<Link to="/receipts">{t("dashboard.seeAll")}</Link>}>
         {latest.data ? <ReceiptsTable receipts={latest.data.results.slice(0, 6)} /> : <Loading rows={5} />}
