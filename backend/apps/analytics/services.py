@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db.models import Count, Max, Min, Q, QuerySet, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 
 from apps.receipts.models import Receipt, ReceiptLine
@@ -64,6 +64,57 @@ def _month_rows(period: Period, sections: Sections):
         .values("month")
         .annotate(total=Sum("total"), receipts=Count("id"))
     )
+
+
+def weekly_spend(period: Period, sections: Sections = ALL_SECTIONS) -> list[dict]:
+    """Spend per Monday-to-Sunday week, contiguous and oldest first.
+
+    Weeks are clipped to the period, so a month starts and ends with partial weeks. An
+    open end stops at today. Same totals rule as `_month_rows`.
+    """
+    today = timezone.localdate()
+    end = min(period.end, today) if period.end else today
+    if period.start:
+        start = period.start
+    else:
+        first = counted_receipts().order_by("issued_at").values_list("issued_at", flat=True).first()
+        start = timezone.localtime(first).date() if first else end
+
+    if sections.active:
+        rows = (
+            filtered_lines(period, sections)
+            .annotate(day=TruncDate("receipt__issued_at"))
+            .values("day")
+            .annotate(total=Sum("amount"), receipts=Count("receipt", distinct=True))
+        )
+    else:
+        rows = (
+            counted_receipts()
+            .filter(period.q())
+            .annotate(day=TruncDate("issued_at"))
+            .values("day")
+            .annotate(total=Sum("total"), receipts=Count("id"))
+        )
+    by_week: dict[date, list] = defaultdict(lambda: [ZERO, 0])
+    for row in rows:
+        monday = row["day"] - timedelta(days=row["day"].weekday())
+        by_week[monday][0] += row["total"] or ZERO
+        by_week[monday][1] += row["receipts"]
+
+    result = []
+    monday = start - timedelta(days=start.weekday())
+    while monday <= end:
+        total, receipts = by_week.get(monday, (ZERO, 0))
+        result.append(
+            {
+                "start": max(monday, start).isoformat(),
+                "end": min(monday + timedelta(days=6), end).isoformat(),
+                "total": total,
+                "receipts": receipts,
+            }
+        )
+        monday += timedelta(days=7)
+    return result
 
 
 def _average(total: Decimal, count: int) -> Decimal:

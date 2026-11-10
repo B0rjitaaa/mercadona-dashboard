@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path("analytics/summary/", views.summary, name="analytics-summary"),
     path("analytics/monthly/", views.monthly, name="analytics-monthly"),
+    path("analytics/weekly/", views.weekly, name="analytics-weekly"),
     path("analytics/overview/", views.overview, name="analytics-overview"),
     path("analytics/compare/", views.compare, name="analytics-compare"),
     path("analytics/top-items/", views.top_items, name="analytics-top-items"),

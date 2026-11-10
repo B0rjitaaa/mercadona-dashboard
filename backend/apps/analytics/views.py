@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
+from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
@@ -10,6 +11,8 @@ from apps.core.serializers import JobRunSerializer
 
 from . import prices, services
 from .filters import parse_period, parse_sections
+
+MAX_WEEKLY = timedelta(days=366)
 
 
 def _json(value):
@@ -53,6 +56,16 @@ def monthly(request):
     else:
         raise ValidationError({"months": "Expected a number between 1 and 240, or 'all'."})
     return Response(_json(services.monthly_spend(months, period, sections)))
+
+
+@api_view(["GET"])
+def weekly(request):
+    """?from=&to=&sections=: spend per week, for short periods such as a month."""
+    params = request.query_params
+    period = parse_period(params)
+    if not period.start or (period.end or timezone.localdate()) - period.start > MAX_WEEKLY:
+        raise ValidationError({"from": "The weekly view needs a start and covers at most a year."})
+    return Response(_json(services.weekly_spend(period, parse_sections(params))))
 
 
 @api_view(["GET"])

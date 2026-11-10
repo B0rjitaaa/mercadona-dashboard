@@ -1,3 +1,4 @@
+import { parseIso } from "../lib/period";
 import { useTranslation } from "react-i18next";
 import type { Unit } from "../api/types";
 
@@ -51,6 +52,12 @@ export function useFormatters() {
             new Date(value),
           )
         : "—",
+    /** "2026-11-02", "2026-11-08" -> "2–8 nov" (or "2–8 de noviembre" when long) */
+    dayRange: (from: string, to: string, long = false) =>
+      new Intl.DateTimeFormat(locale, { day: "numeric", month: long ? "long" : "short" }).formatRange(
+        parseIso(from),
+        parseIso(to),
+      ),
     /** "2026-11" -> "nov 26" */
     monthShort: (key: string) =>
       new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }).format(monthDate(key)),

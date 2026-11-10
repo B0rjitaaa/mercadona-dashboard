@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthPeriod, parsePeriod, resolveComparison, resolvePeriod, singleMonth, writePeriod } from "./period";
+import { monthPeriod, parsePeriod, resolveComparison, resolvePeriod, singleMonth, withinOneMonth, writePeriod } from "./period";
 
 const today = new Date(2026, 10, 10); // 10 Nov 2026
 
@@ -32,6 +32,14 @@ describe("month helpers", () => {
     expect(singleMonth({ from: "2024-02-01", to: "2024-02-29" })).toBe("2024-02");
     expect(singleMonth({ from: "2024-02-01", to: "2024-03-31" })).toBeNull();
     expect(singleMonth({ from: "2024-02-01" })).toBeNull();
+  });
+
+  it("detects ranges inside one month", () => {
+    const today = new Date(2026, 10, 10);
+    expect(withinOneMonth({ from: "2026-11-01" }, today)).toBe(true);
+    expect(withinOneMonth({ from: "2026-10-01", to: "2026-10-31" }, today)).toBe(true);
+    expect(withinOneMonth({ from: "2026-10-01" }, today)).toBe(false);
+    expect(withinOneMonth({}, today)).toBe(false);
   });
 });
 
