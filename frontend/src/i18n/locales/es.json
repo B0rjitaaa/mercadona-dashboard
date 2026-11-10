@@ -320,7 +320,8 @@
       "fri": "viernes",
       "sat": "sábado",
       "sun": "domingo"
-    }
+    },
+    "reportSchedule": "Envío"
   },
   "review": {
     "title": "Productos sin identificar",

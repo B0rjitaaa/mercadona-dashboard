@@ -95,7 +95,7 @@ export function SettingsPage() {
           <dl className="kv">
             <dt>{t("settings.reportRecipient")}</dt>
             <dd>{r.recipient ?? <span className="muted">{t("settings.reportNoRecipient")}</span>}</dd>
-            <dt>{t("settings.schedule")}</dt>
+            <dt>{t("settings.reportSchedule")}</dt>
             <dd>
               {t("settings.reportScheduleValue", {
                 day: t(`settings.days.${r.schedule.day}`, { defaultValue: r.schedule.day }),
