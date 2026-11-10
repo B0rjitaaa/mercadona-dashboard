@@ -7,9 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY --from=ghcr.io/astral-sh/uv:0.7.12 /uv /usr/local/bin/uv
 
+# Production builds pass --no-dev to skip pytest/ruff/reportlab
+ARG UV_SYNC_ARGS=""
+
 WORKDIR /app
 COPY pyproject.toml uv.lock* ./
-RUN uv sync --no-install-project
+RUN uv sync --frozen --no-install-project $UV_SYNC_ARGS
 
 COPY . .
 EXPOSE 8000

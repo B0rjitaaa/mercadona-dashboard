@@ -16,3 +16,4 @@ backend/apps/receipts/tests/fixtures/private/*
 !backend/apps/receipts/tests/fixtures/private/README.md
 backend/apps/receipts/tests/fixtures/real/*
 !backend/apps/receipts/tests/fixtures/real/README.md
+backups/

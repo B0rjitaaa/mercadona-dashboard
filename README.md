@@ -25,7 +25,13 @@ make test            # backend tests
 make lint            # ruff
 make makemigrations  # create migrations
 make migrate         # apply migrations
+make backup          # database dump + receipt PDFs into backups/
 ```
+
+## Production
+
+To run it on a home server (nginx + gunicorn, starts on boot) see
+[docs/deployment.md](docs/deployment.md).
 
 ## Conventions
 
