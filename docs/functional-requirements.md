@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.3
+- **Document version:** 0.4
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -13,6 +13,7 @@
 | 0.1 | 2026-11-10 | Initial draft (Spanish). |
 | 0.2 | 2026-11-10 | Translated to English. Added language policy (NFR-09, NFR-10), multilingual UI (FR-12), architecture & project structure (section 7). |
 | 0.3 | 2026-11-10 | Gmail sender address (FR-01). Real receipt layout: VAT table and payment details (FR-02). Git branching model (NFR-11). Test fixture privacy (NFR-08). |
+| 0.4 | 2026-11-10 | FR-01: dedicated mailbox with forwarded receipts, sync strategy, retries and concurrency. Data model: GmailMessage. |
 
 ---
 
@@ -66,11 +67,15 @@ A web application that runs locally (Docker) and:
 - Can be **triggered manually** from the UI ("Sync now").
 - Only processes emails matching a configurable filter (sender, subject and/or Gmail label). The filter lives in configuration, not in code.
 - Receipts are sent by **`Ticket Digital Mercadona <ticket_digital@mail.mercadona.com>`**. Default filter: `from:ticket_digital@mail.mercadona.com has:attachment filename:pdf`.
-- Only processes emails **newer** than the last successful sync.
+- **Dedicated mailbox:** the recommended setup is a Gmail account used only for receipts. Receipts reach it via an automatic forwarding filter from the personal account (keeps the original sender) or by manual forwarding (sender becomes the personal address). In that setup the filter is `has:attachment filename:pdf`, and any non-receipt PDF ends up as a receipt in "Error" status.
+- An email may contain several PDFs; each one becomes a receipt.
+- Every run lists all matching message IDs and skips the ones already seen, so the first run is the historical import and later runs only download new emails.
+- A message that fails to download is retried on the next run.
+- Only one sync can run at a time (database lock); a concurrent request is skipped.
 - The PDF attachment is downloaded and stored locally so it can be re-processed.
 - An already processed email **never creates a duplicate receipt** (checked by Gmail message ID and by simplified-invoice number).
 - Optionally, processed emails get a Gmail label (e.g. `mercadona/processed`).
-- First run offers a **historical import** (all matching emails), not just the last day.
+- First run performs a **historical import** (all matching emails), not just the last day.
 - Gmail access uses OAuth2 with **read-only** scope (plus label modification if labelling is enabled).
 
 **Run log:** each sync stores date, emails found, receipts created, duplicates skipped and errors.
@@ -410,17 +415,19 @@ Store ──< Receipt ──< ReceiptLine >── Product ──< CatalogPrice
                                          │
                                          └──< ProductAlias
 
+GmailMessage (every email seen by the sync)
 JobRun (log of background job executions)
 ```
 
 | Entity | Main fields |
 |---|---|
 | **Store** | Chain, address, postal code, city, phone. |
-| **Receipt** | Simplified-invoice number (unique), date/time, operation number, store, total, payment method, status, PDF, Gmail message ID. |
+| **Receipt** | Simplified-invoice number (unique), date/time, operation number, store, total, payment method, status, PDF (unique by SHA-256), source (`upload`/`gmail`), Gmail message ID. |
 | **ReceiptLine** | Receipt, line type, original description, quantity, unit (`unit`/`kg`), unit price, amount, product (optional). |
 | **Product** | Mercadona ID (optional), name, brand, packaging, category, photo, URL, status, raw API data. |
 | **ProductAlias** | Normalised receipt description → product; source (automatic/manual). |
 | **CatalogPrice** | Product, date, price, reference unit price. |
+| **GmailMessage** | Gmail message ID (unique), received date, sender, subject, number of PDFs, status (`imported`, `duplicate`, `no_pdf`, `error`). |
 | **JobRun** | Job type, start, end, result, counters, errors. |
 
 ---

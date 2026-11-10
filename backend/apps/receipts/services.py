@@ -19,7 +19,7 @@ class DuplicateReceiptError(Exception):
 def create_receipt(
     file: BinaryIO,
     source: Receipt.Source = Receipt.Source.UPLOAD,
-    gmail_message_id: str | None = None,
+    gmail_message_id: str = "",
 ) -> Receipt:
     """Store a receipt PDF in 'pending' state. Raises DuplicateReceiptError for known PDFs."""
     content = file.read()

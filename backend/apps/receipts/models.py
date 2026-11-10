@@ -43,7 +43,7 @@ class Receipt(TimeStampedModel):
     pdf = models.FileField(upload_to=receipt_upload_path)
     pdf_sha256 = models.CharField(max_length=64, unique=True)
     source = models.CharField(max_length=10, choices=Source.choices, default=Source.UPLOAD)
-    gmail_message_id = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    gmail_message_id = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     # Processing state
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
