@@ -9,7 +9,7 @@ import { SyncButton } from "../../components/SyncButton";
 import { Card, Delta, ErrorState, Loading, PageHeader, StatTile } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
 import { useFilters } from "../../lib/filters";
-import { monthPeriod, withinOneMonth, writePeriod } from "../../lib/period";
+import { isoDate, monthPeriod, withinOneMonth, writePeriod, type Range } from "../../lib/period";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -21,10 +21,13 @@ export function DashboardPage() {
   const period = filters.range;
   const summary = useSummary();
   const overview = useOverview(period);
-  // A period inside one month (this month, last month...) is shown week by week
+  // A period inside one month is shown week by week; "this month" as the last four weeks
   const byWeek = withinOneMonth(period);
+  const chartRange: Range = filters.period.preset === "this_month" ? lastWeeks(4) : period;
   const monthly = useMonthly(period);
-  const weekly = useWeekly(period, byWeek);
+  const weekly = useWeekly(chartRange, byWeek);
+  // From three months on, the monthly chart also draws the average receipt
+  const showAverage = !byWeek && (monthly.data?.length ?? 0) >= 3;
   const latest = useReceipts({ page: 1 });
   const prices = usePriceWatch();
 
@@ -101,7 +104,7 @@ export function DashboardPage() {
       <div className="grid grid-main">
         <Card
           title={t(byWeek ? "dashboard.chartTitleWeekly" : "dashboard.chartTitle")}
-          subtitle={`${rangeLabel(period)} · ${t(byWeek ? "dashboard.chartSubtitleWeekly" : "dashboard.chartSubtitle")}`}
+          subtitle={`${rangeLabel(byWeek ? chartRange : period)} · ${t(byWeek ? "dashboard.chartSubtitleWeekly" : "dashboard.chartSubtitle")}`}
           actions={<Link to="/spending">{t("dashboard.seeSpending")}</Link>}
         >
           {byWeek ? (
@@ -130,7 +133,10 @@ export function DashboardPage() {
                 key: m.month,
                 value: Number(m.total),
                 extra: t("dashboard.receiptsCount", { count: m.receipts }),
+                line: showAverage && m.receipts > 0 ? Number(m.average_receipt) : undefined,
               }))}
+              barLabel={t("dashboard.monthSpend")}
+              lineLabel={showAverage ? t("dashboard.averageReceipt") : undefined}
               onSelect={(month) => navigate(`/spending?${writePeriod(new URLSearchParams(), monthPeriod(month))}`)}
             />
           ) : (
@@ -202,4 +208,11 @@ export function DashboardPage() {
 function splitWeek(key: string): [string, string] {
   const [from, to] = key.split("/");
   return [from, to];
+}
+
+/** The current Monday-to-Sunday week and the ones before it, up to today. */
+function lastWeeks(count: number, today = new Date()): Range {
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  monday.setDate(monday.getDate() - 7 * (count - 1));
+  return { from: isoDate(monday) };
 }

@@ -76,6 +76,8 @@
     "allTime": "Total recorded",
     "chartTitle": "Spending per month",
     "chartSubtitle": "Click a month to see the details",
+    "monthSpend": "Monthly spend",
+    "averageReceipt": "Average receipt",
     "chartTitleWeekly": "Spending per week",
     "chartSubtitleWeekly": "Click a week to see the details",
     "seeSpending": "See monthly spending",
