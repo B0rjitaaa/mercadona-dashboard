@@ -12,6 +12,8 @@ dependencies = [
     "google-api-python-client>=2.170",
     "google-auth-oauthlib>=1.2",
     "requests>=2.32",
+    "gunicorn>=23.0",
+    "whitenoise>=6.9",
 ]
 
 [dependency-groups]
