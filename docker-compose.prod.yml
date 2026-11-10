@@ -56,9 +56,11 @@ services:
     <<: *backend
     command: celery -A config beat -l info -s /tmp/celerybeat-schedule
 
-  # Daily database dump + receipt PDFs into ./backups (see deploy/backup.sh)
+  # Daily database dump + receipt PDFs into ./backups (see deploy/backup.sh).
+  # Optional: enable it with COMPOSE_PROFILES=backup when the server has no backup system.
   backup:
     image: postgres:16-alpine
+    profiles: ["backup"]
     env_file: .env
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
