@@ -2,6 +2,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useItems } from "../../api/queries";
 import { Sparkline } from "../../components/charts/Sparkline";
+import { ItemCell } from "../../components/ItemCell";
+import { itemPath } from "../../components/ProductThumb";
 import { Card, Delta, EmptyState, ErrorState, Loading, PageHeader } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
 
@@ -75,15 +77,9 @@ export function ProductsPage() {
                   {rows.slice(0, limit).map((item) => {
                     const pct = Number(item.price_change_pct ?? 0);
                     return (
-                      <tr
-                        key={item.description}
-                        className="clickable"
-                        onClick={() => navigate(`/products/${encodeURIComponent(item.description)}`)}
-                      >
+                      <tr key={item.key} className="clickable" onClick={() => navigate(itemPath(item))}>
                         <td className="wrap">
-                          <a href="#" onClick={(e) => e.preventDefault()}>
-                            {item.description}
-                          </a>
+                          <ItemCell item={item} />
                         </td>
                         <td className="right num">{item.purchases}</td>
                         <td className="right num">{f.currency(item.spent)}</td>

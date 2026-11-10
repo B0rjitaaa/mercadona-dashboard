@@ -93,6 +93,14 @@ class ReceiptLine(models.Model):
     unit = models.CharField(max_length=10, choices=Unit.choices, default=Unit.UNIT)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # Set from ProductAlias (FR-04); null while the description is unidentified
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="receipt_lines",
+    )
 
     class Meta:
         ordering = ["receipt", "position"]

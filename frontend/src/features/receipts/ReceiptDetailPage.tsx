@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useDeleteReceipt, useReceipt, useReprocessReceipt } from "../../api/queries";
 import type { ReceiptDetail } from "../../api/types";
 import { Icon } from "../../components/Icon";
+import { ProductThumb, itemPath } from "../../components/ProductThumb";
 import { Card, ErrorState, KindBadge, Loading, PageHeader, StatusBadge } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
 
@@ -95,7 +96,17 @@ export function ReceiptDetailPage() {
                     <td className="right num">{f.quantity(l.quantity, l.unit)}</td>
                     <td className="wrap">
                       {l.line_type === "product" ? (
-                        <Link to={`/products/${encodeURIComponent(l.description)}`}>{l.description}</Link>
+                        <span className="item-cell">
+                          <ProductThumb src={l.product_thumbnail} />
+                          <span>
+                            <Link to={itemPath({ product_id: l.product, description: l.description, name: l.description })}>
+                              {l.description}
+                            </Link>
+                            <small>
+                              {l.product_name ?? <span className="badge warning">{t("products.unidentified")}</span>}
+                            </small>
+                          </span>
+                        </span>
                       ) : (
                         <>
                           {l.description} <span className="badge plain">{t(`lineType.${l.line_type}`)}</span>

@@ -10,9 +10,17 @@ class StoreSerializer(serializers.ModelSerializer):
 
 
 class ReceiptLineSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source="product.name", read_only=True, default=None)
+    product_thumbnail = serializers.CharField(
+        source="product.thumbnail", read_only=True, default=None
+    )
+
     class Meta:
         model = ReceiptLine
         fields = [
+            "product",
+            "product_name",
+            "product_thumbnail",
             "id",
             "position",
             "line_type",

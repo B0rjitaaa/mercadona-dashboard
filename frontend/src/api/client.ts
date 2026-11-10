@@ -8,7 +8,8 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, path: string, body?: BodyInit): Promise<T> {
-  const res = await fetch(`/api${path}`, { method, body });
+  const headers: HeadersInit = body instanceof Blob && body.type ? { "Content-Type": body.type } : {};
+  const res = await fetch(`/api${path}`, { method, body, headers });
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) throw new ApiError(res.status, data);
