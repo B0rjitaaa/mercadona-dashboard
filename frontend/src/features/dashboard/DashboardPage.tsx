@@ -1,26 +1,127 @@
-import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { apiGet } from "../../api/client";
+import { useMonthly, useReceipts, useSummary } from "../../api/queries";
+import { SpendBarChart } from "../../components/charts/SpendBarChart";
+import { ReceiptsTable } from "../../components/ReceiptsTable";
+import { SyncButton } from "../../components/SyncButton";
+import { Card, Delta, ErrorState, Loading, PageHeader, StatTile } from "../../components/ui";
+import { useFormatters } from "../../i18n/format";
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const health = useQuery({
-    queryKey: ["health"],
-    queryFn: () => apiGet<{ status: string }>("/health/"),
-  });
+  const f = useFormatters();
+  const navigate = useNavigate();
+  const summary = useSummary();
+  const monthly = useMonthly("12");
+  const latest = useReceipts({ page: 1 });
 
-  const status = health.isLoading
-    ? t("dashboard.checking")
-    : health.isError
-      ? t("dashboard.offline")
-      : t("dashboard.online");
+  const s = summary.data;
+  const current = s ? Number(s.current_month.total) : 0;
+  const previous = s ? Number(s.previous_month.total) : 0;
+  const average = s ? Number(s.average_month_12) : 0;
+  const vsAverage = average ? ((current - average) / average) * 100 : 0;
 
   return (
-    <>
-      <h1>{t("dashboard.title")}</h1>
-      <p>
-        {t("dashboard.backend")}: {status}
-      </p>
-    </>
+    <div className="page">
+      <PageHeader title={t("dashboard.title")} subtitle={t("dashboard.subtitle")} actions={<SyncButton />} />
+
+      {summary.isError && <ErrorState onRetry={() => summary.refetch()} />}
+
+      {s && (s.pending.needs_review > 0 || s.pending.error > 0) && (
+        <div className={`alert ${s.pending.error ? "critical" : ""}`}>
+          {t("dashboard.pendingAlert", { review: s.pending.needs_review, error: s.pending.error })}{" "}
+          <Link to={`/receipts?status=${s.pending.error ? "error" : "needs_review"}`}>{t("dashboard.review")}</Link>
+        </div>
+      )}
+
+      <div className="grid grid-4">
+        {s ? (
+          <>
+            <StatTile
+              label={t("dashboard.thisMonth", { month: f.monthLong(s.current_month.month) })}
+              value={f.currency(current)}
+              foot={
+                <>
+                  {average > 0 && <Delta value={vsAverage} label={f.percent(vsAverage)} />}
+                  <span>{t("dashboard.vsAverage")}</span>
+                </>
+              }
+            />
+            <StatTile
+              label={t("dashboard.lastMonth", { month: f.monthLong(s.previous_month.month) })}
+              value={f.currency(previous)}
+              foot={t("dashboard.receiptsCount", { count: s.previous_month.receipts })}
+            />
+            <StatTile
+              label={t("dashboard.monthlyAverage")}
+              value={f.currency(average)}
+              foot={t("dashboard.last12")}
+            />
+            <StatTile
+              label={t("dashboard.allTime")}
+              value={f.currency(s.all_time.total)}
+              foot={t("dashboard.receiptsCount", { count: s.all_time.receipts })}
+            />
+          </>
+        ) : (
+          Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="card">
+              <Loading rows={2} />
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="grid grid-main">
+        <Card
+          title={t("dashboard.chartTitle")}
+          subtitle={t("dashboard.chartSubtitle")}
+          actions={<Link to="/spending">{t("dashboard.seeSpending")}</Link>}
+        >
+          {monthly.data ? (
+            <SpendBarChart
+              ariaLabel={t("dashboard.chartTitle")}
+              data={monthly.data.map((m) => ({
+                key: m.month,
+                value: Number(m.total),
+                extra: t("dashboard.receiptsCount", { count: m.receipts }),
+              }))}
+              onSelect={(month) => navigate(`/spending?month=${month}`)}
+            />
+          ) : (
+            <Loading rows={6} />
+          )}
+        </Card>
+
+        <Card title={t("dashboard.syncTitle")}>
+          {s ? (
+            s.last_sync ? (
+              <dl className="kv">
+                <dt>{t("dashboard.lastSync")}</dt>
+                <dd>{f.dateTime(s.last_sync.finished_at ?? s.last_sync.started_at)}</dd>
+                <dt>{t("dashboard.result")}</dt>
+                <dd>
+                  <span className={`badge ${s.last_sync.status === "success" ? "good" : s.last_sync.status === "failed" ? "critical" : "info"}`}>
+                    {t(`job.${s.last_sync.status}`)}
+                  </span>
+                </dd>
+                <dt>{t("dashboard.newReceipts")}</dt>
+                <dd className="num">{s.last_sync.stats.receipts_created ?? 0}</dd>
+              </dl>
+            ) : (
+              <p className="muted">{t("dashboard.neverSynced")}</p>
+            )
+          ) : (
+            <Loading />
+          )}
+          <p className="muted" style={{ fontSize: 13 }}>{t("dashboard.syncHint")}</p>
+          <SyncButton primary />
+        </Card>
+      </div>
+
+      <Card title={t("dashboard.latestReceipts")} actions={<Link to="/receipts">{t("dashboard.seeAll")}</Link>}>
+        {latest.data ? <ReceiptsTable receipts={latest.data.results.slice(0, 6)} /> : <Loading rows={5} />}
+      </Card>
+    </div>
   );
 }

@@ -1,24 +1,105 @@
 {
   "app": { "title": "Mercadona Dashboard" },
   "nav": {
-    "dashboard": "Home",
-    "spending": "Monthly spending",
-    "receipts": "Receipts",
-    "products": "Products",
-    "review": "Unidentified",
-    "settings": "Settings"
+    "dashboard": "Home", "spending": "Monthly spending", "receipts": "Receipts", "products": "Products",
+    "review": "Unidentified", "settings": "Settings", "label": "Main navigation",
+    "open": "Open menu", "close": "Close menu"
   },
   "language": { "label": "Language", "es": "Español", "en": "English" },
-  "dashboard": {
-    "title": "Home",
-    "backend": "Backend",
-    "checking": "checking…",
-    "offline": "offline",
-    "online": "online"
+  "theme": { "label": "Theme", "system": "System", "light": "Light", "dark": "Dark" },
+  "common": {
+    "loadError": "Could not load the data.", "retry": "Retry",
+    "pageOf": "Page {{page}} of {{pages}} · {{count}} in total", "previous": "Previous", "next": "Next"
   },
-  "receipts": { "title": "Receipts" },
-  "products": { "title": "Products" },
-  "spending": { "title": "Monthly spending" },
-  "review": { "title": "Unidentified products" },
-  "settings": { "title": "Settings" }
+  "status": { "pending": "Pending", "processed": "Processed", "needs_review": "Needs review", "error": "Error" },
+  "kind": { "sale": "Purchase", "return": "Return" },
+  "lineType": { "product": "Product", "discount": "Discount", "return": "Return", "other": "Other" },
+  "source": { "upload": "Manual upload", "gmail": "Gmail" },
+  "job": { "running": "Running", "success": "Success", "failed": "Failed" },
+  "sync": { "now": "Sync now", "running": "Starting…", "queued": "Sync in progress" },
+  "dashboard": {
+    "title": "Home", "subtitle": "Overview of your supermarket spending",
+    "pendingAlert": "Some receipts need attention: {{review}} to review and {{error}} with errors.",
+    "review": "See receipts", "pendingTitle": "Receipts to review or with errors",
+    "thisMonth": "This month ({{month}})", "vsAverage": "vs your monthly average",
+    "lastMonth": "Previous month ({{month}})",
+    "receiptsCount_one": "{{count}} receipt", "receiptsCount_other": "{{count}} receipts",
+    "monthlyAverage": "Monthly average", "last12": "Last 12 months with purchases",
+    "allTime": "Total recorded",
+    "chartTitle": "Spending over the last 12 months", "chartSubtitle": "Click a month to see the details",
+    "seeSpending": "See monthly spending", "syncTitle": "Gmail sync",
+    "lastSync": "Last", "result": "Result", "newReceipts": "New receipts",
+    "neverSynced": "Not synced yet.",
+    "syncHint": "Syncs automatically every day at 07:00.",
+    "latestReceipts": "Latest receipts", "seeAll": "See all"
+  },
+  "spending": {
+    "title": "Monthly spending", "subtitle": "How much you spend each month, and on what",
+    "range": "Period",
+    "ranges": { "6": "6 months", "12": "12 months", "24": "24 months", "all": "All" },
+    "chartTitle": "Spending per month", "chartSubtitle": "{{total}} in the period · {{average}} average per month with purchases",
+    "clickHint": "Click a bar or a table row to see that month.",
+    "monthTotal": "Spent", "receipts": "Receipts", "averageReceipt": "Average receipt",
+    "seeReceipts": "See this month's receipts", "topBySpend": "What cost you the most",
+    "topByPurchases": "What you buy most often", "noItems": "No purchases this month.",
+    "times_one": "{{count}} time", "times_other": "{{count}} times",
+    "tableTitle": "Spending table", "month": "Month", "total": "Total"
+  },
+  "receipts": {
+    "title": "Receipts", "subtitle": "All your imported receipts",
+    "date": "Date", "store": "Store", "items": "Items", "total": "Total", "payment": "Payment",
+    "status": "Status", "kind": "Type",
+    "upload": "Upload PDF", "uploading": "Uploading…", "uploadError": "Could not upload the PDF.",
+    "searchPlaceholder": "Search product or invoice number", "allStatuses": "All statuses",
+    "allKinds": "Purchases and returns", "from": "From", "to": "To", "clear": "Clear filters",
+    "empty": "No receipts match these filters.",
+    "resultCount_one": "{{count}} receipt", "resultCount_other": "{{count}} receipts",
+    "sum": "adding up to {{total}}"
+  },
+  "receipt": {
+    "openPdf": "Open PDF", "reprocess": "Re-process", "reprocessQueued": "Re-processing…",
+    "delete": "Delete", "deleteConfirm": "Delete this receipt and its PDF?", "back": "Receipts",
+    "warnings": "Parsing warnings",
+    "lines_one": "{{count}} line", "lines_other": "{{count}} lines",
+    "quantity": "Qty", "description": "Description", "unitPrice": "Unit price", "amount": "Amount",
+    "total": "Total", "details": "Receipt details", "returnNumber": "Return number",
+    "invoice": "Invoice number", "originalInvoice": "Original invoice", "operation": "Operation",
+    "store": "Store", "source": "Source", "vat": "VAT breakdown", "vatRate": "Rate",
+    "vatBase": "Base", "vatTax": "Tax"
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Grouped by receipt description. Phase 3 will link them to Mercadona's catalogue.",
+    "searchPlaceholder": "Search product", "sortBy": "Sort by",
+    "sort": { "spent": "Highest spend", "purchases": "Most bought", "recent": "Most recent purchase", "price_change": "Largest price increase", "name": "Name" },
+    "empty": "No matching products.",
+    "count_one": "{{count}} product", "count_other": "{{count}} products",
+    "name": "Product", "purchases": "Purchases", "spent": "Spent", "lastPrice": "Last price",
+    "change": "Change", "trend": "Trend", "lastPurchase": "Last purchase",
+    "showMore": "Show more ({{count}} left)"
+  },
+  "product": {
+    "back": "Products", "subtitle": "Bought between {{first}} and {{last}}",
+    "timesBought": "Times bought",
+    "every_one": "Every day on average", "every_other": "Every {{count}} days on average",
+    "quantity": "{{quantity}} in total", "totalSpent": "Total spent", "currentPrice": "Current price",
+    "sinceFirst": "since {{price}}", "priceRange": "Lowest – highest price", "average": "Average {{price}}",
+    "priceTitle": "Price over time", "priceSubtitle": "Unit price paid at each purchase",
+    "monthlyTitle": "Monthly spend on this product",
+    "historyTitle_one": "{{count}} purchase", "historyTitle_other": "Purchase history ({{count}})"
+  },
+  "settings": {
+    "title": "Settings", "subtitle": "Gmail connection and job log",
+    "gmailTitle": "Gmail", "credentials": "OAuth credentials", "yes": "Yes", "no": "No",
+    "authorised": "Account authorised", "notAuthorised": "No (run make gmail-auth)",
+    "query": "Search filter", "schedule": "Automatic sync",
+    "scheduleValue": "Every day at 07:00",
+    "jobsTitle": "Recent runs", "started": "Started", "job": "Job", "result": "Result",
+    "messages": "New emails", "created": "Receipts created", "duplicates": "Duplicates", "error": "Error"
+  },
+  "review": {
+    "title": "Unidentified products",
+    "subtitle": "Receipt descriptions not yet linked to a catalogue product",
+    "comingSoon": "Available in phase 3, once Mercadona's API is integrated."
+  }
 }
