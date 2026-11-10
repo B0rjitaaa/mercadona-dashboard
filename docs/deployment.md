@@ -62,12 +62,17 @@ git pull && make prod-up
 
 ## Backups
 
-The `backup` service runs `deploy/backup.sh` every day at `BACKUP_HOUR:BACKUP_MINUTE`
-(03:30 by default): a database dump and a tarball of the receipt PDFs go into `backups/`
-(git-ignored) and files older than `BACKUP_KEEP_DAYS` (14) are deleted.
+If the server already has a backup system, point it at the `db` service (`pg_dump`) and the
+`media` volume. Setting `COMPOSE_FILE=docker-compose.prod.yml` in `.env` makes a plain
+`docker compose` in this folder act on the production stack, which most scripts expect.
+
+Otherwise enable the built-in `backup` service with `COMPOSE_PROFILES=backup` in `.env`.
+It runs `deploy/backup.sh` every day at `BACKUP_HOUR:BACKUP_MINUTE` (03:30 by default):
+a database dump and a tarball of the receipt PDFs go into `backups/` (git-ignored) and
+files older than `BACKUP_KEEP_DAYS` (14) are deleted.
 
 ```bash
-make prod-backup-now                 # run it immediately
+make prod-backup-now                 # run it immediately (backup profile)
 make prod-logs                       # "backup ok" lines from the backup service
 make restore PROD=1 DB=backups/db-<stamp>.dump MEDIA=backups/media-<stamp>.tar
 ```
