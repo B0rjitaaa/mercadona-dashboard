@@ -3,6 +3,8 @@ import { api, qs } from "./client";
 import type {
   CatalogStatus,
   CategorySpend,
+  Comparison,
+  Overview,
   GmailStatus,
   ProductSummary,
   ReviewItem,
@@ -15,30 +17,63 @@ import type {
   ReceiptDetail,
   ReceiptSummary,
   Summary,
-  TopItems,
 } from "./types";
 
 export const useSummary = () =>
   useQuery({ queryKey: ["summary"], queryFn: () => api.get<Summary>("/analytics/summary/") });
 
-export const useMonthly = (months: string) =>
+/** Period and section filter as API query params (FR-14). */
+export interface FilterQuery {
+  from?: string;
+  to?: string;
+  sections?: string;
+}
+
+export const useMonthly = (filters: FilterQuery) =>
   useQuery({
-    queryKey: ["monthly", months],
-    queryFn: () => api.get<MonthSpend[]>(`/analytics/monthly/${qs({ months })}`),
+    queryKey: ["monthly", filters],
+    queryFn: () =>
+      api.get<MonthSpend[]>(
+        `/analytics/monthly/${qs({ ...filters, months: filters.from || filters.to ? undefined : "all" })}`,
+      ),
     placeholderData: keepPreviousData,
   });
 
-export const useTopItems = (month: string) =>
+export const useOverview = (filters: FilterQuery) =>
   useQuery({
-    queryKey: ["top-items", month],
-    queryFn: () => api.get<TopItems>(`/analytics/top-items/${qs({ month })}`),
+    queryKey: ["overview", filters],
+    queryFn: () => api.get<Overview>(`/analytics/overview/${qs({ ...filters })}`),
     placeholderData: keepPreviousData,
   });
 
-export const useItems = (search: string, sort: string) =>
+export interface CompareQuery {
+  a_from: string;
+  a_to: string;
+  b_from: string;
+  b_to: string;
+  sections?: string;
+}
+
+export const useCompare = (params: CompareQuery | null) =>
   useQuery({
-    queryKey: ["items", search, sort],
-    queryFn: () => api.get<Item[]>(`/analytics/items/${qs({ search, sort })}`),
+    queryKey: ["compare", params],
+    queryFn: () => api.get<Comparison>(`/analytics/compare/${qs({ ...params })}`),
+    enabled: params !== null,
+    placeholderData: keepPreviousData,
+  });
+
+export interface ItemsQuery extends FilterQuery {
+  search?: string;
+  sort?: string;
+  status?: string;
+  min_purchases?: string;
+  trend?: string;
+}
+
+export const useItems = (filters: ItemsQuery) =>
+  useQuery({
+    queryKey: ["items", filters],
+    queryFn: () => api.get<Item[]>(`/analytics/items/${qs({ ...filters })}`),
     placeholderData: keepPreviousData,
   });
 
@@ -59,11 +94,12 @@ export const usePriceWatch = (days = 30) =>
     placeholderData: keepPreviousData,
   });
 
-export const useCategories = (month?: string) =>
+/** All-time sections with their ids: the options of the section filter. */
+export const useSections = () =>
   useQuery({
-    queryKey: ["categories", month],
-    queryFn: () => api.get<CategorySpend>(`/analytics/categories/${qs({ month })}`),
-    placeholderData: keepPreviousData,
+    queryKey: ["categories", "all"],
+    queryFn: () => api.get<CategorySpend>("/analytics/categories/"),
+    staleTime: 5 * 60 * 1000,
   });
 
 export const useReview = () =>

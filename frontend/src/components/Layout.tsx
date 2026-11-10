@@ -9,6 +9,7 @@ import { Icon, type IconName } from "./Icon";
 const LINKS: { to: string; key: string; icon: IconName }[] = [
   { to: "/", key: "nav.dashboard", icon: "home" },
   { to: "/spending", key: "nav.spending", icon: "chart" },
+  { to: "/compare", key: "nav.compare", icon: "compare" },
   { to: "/receipts", key: "nav.receipts", icon: "receipt" },
   { to: "/products", key: "nav.products", icon: "box" },
   { to: "/prices", key: "nav.prices", icon: "tag" },

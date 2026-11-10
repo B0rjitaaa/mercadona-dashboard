@@ -4,7 +4,7 @@ Until products are identified (phase 3), an "item" is a receipt description.
 """
 
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db.models import Count, Max, Min, Q, QuerySet, Sum
@@ -12,6 +12,8 @@ from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from apps.receipts.models import Receipt, ReceiptLine
+
+from .filters import ALL_SECTIONS, ALL_TIME, Period, Sections
 
 ZERO = Decimal("0.00")
 COUNTED_STATUSES = (Receipt.Status.PROCESSED, Receipt.Status.NEEDS_REVIEW)
@@ -41,29 +43,58 @@ def month_key(value: date) -> str:
     return value.strftime("%Y-%m")
 
 
-def monthly_spend(months: int | None = 12) -> list[dict]:
-    """Spend per month, contiguous (months without receipts are zero), oldest first.
+def filtered_lines(period: Period = ALL_TIME, sections: Sections = ALL_SECTIONS):
+    return product_lines().filter(period.q("receipt__"), sections.q())
 
-    `months=None` returns every month since the first receipt.
-    """
-    rows = (
+
+def _month_rows(period: Period, sections: Sections):
+    """(month, total, receipts) rows. With a section filter the total is the sum of the
+    matching product lines; otherwise it is the receipt total (discounts and returns included)."""
+    if sections.active:
+        return (
+            filtered_lines(period, sections)
+            .annotate(month=TruncMonth("receipt__issued_at"))
+            .values("month")
+            .annotate(total=Sum("amount"), receipts=Count("receipt", distinct=True))
+        )
+    return (
         counted_receipts()
+        .filter(period.q())
         .annotate(month=TruncMonth("issued_at"))
         .values("month")
         .annotate(total=Sum("total"), receipts=Count("id"))
     )
+
+
+def _average(total: Decimal, count: int) -> Decimal:
+    return (total / count).quantize(Decimal("0.01")) if count else ZERO
+
+
+def monthly_spend(
+    months: int | None = 12, period: Period = ALL_TIME, sections: Sections = ALL_SECTIONS
+) -> list[dict]:
+    """Spend per month, contiguous (months without receipts are zero), oldest first.
+
+    The range is the period when given; otherwise the last `months` months, or every
+    month since the first receipt when `months` is None.
+    """
+    rows = _month_rows(period, sections)
     # TruncMonth on a DateTimeField returns aware datetimes in the current time zone
     by_month = {month_key(row["month"].date()): row for row in rows}
     current = month_start(timezone.localdate())
+    end = month_start(period.end) if period.end else current
 
-    if months is None:
-        start = min((row["month"].date() for row in rows), default=current)
+    if period.start:
+        start = month_start(period.start)
+    elif months is None or period.end:
+        first = counted_receipts().order_by("issued_at").values_list("issued_at", flat=True).first()
+        start = month_start(timezone.localtime(first).date()) if first else end
     else:
         start = add_months(current, -(months - 1))
 
     result = []
     month = start
-    while month <= current:
+    while month <= end:
         row = by_month.get(month_key(month), {})
         total = row.get("total") or ZERO
         receipts = row.get("receipts") or 0
@@ -72,9 +103,7 @@ def monthly_spend(months: int | None = 12) -> list[dict]:
                 "month": month_key(month),
                 "total": total,
                 "receipts": receipts,
-                "average_receipt": (total / receipts).quantize(Decimal("0.01"))
-                if receipts
-                else ZERO,
+                "average_receipt": _average(total, receipts),
             }
         )
         month = add_months(month, 1)
@@ -159,17 +188,8 @@ def _grouped(lines, aggregates: dict) -> list[dict]:
 
 
 def top_items(month: date, limit: int = 10) -> dict:
-    lines = product_lines().filter(
-        receipt__issued_at__date__gte=month, receipt__issued_at__date__lt=add_months(month, 1)
-    )
-    rows = _grouped(
-        lines,
-        {
-            "spent": Sum("amount"),
-            "purchases": Count("receipt", distinct=True),
-            "quantity": Sum("quantity"),
-        },
-    )
+    period = Period(month, add_months(month, 1) - timedelta(days=1))
+    rows = _grouped(filtered_lines(period), ITEM_AGGREGATES)
     return {
         "month": month_key(month),
         "by_spend": sorted(rows, key=lambda r: (-r["spent"], r["name"]))[:limit],
@@ -179,31 +199,168 @@ def top_items(month: date, limit: int = 10) -> dict:
     }
 
 
-def categories(month: date | None = None) -> dict:
-    """Spend per catalogue section (FR-07). Unidentified lines are grouped under None."""
-    lines = product_lines()
-    if month:
-        lines = lines.filter(
-            receipt__issued_at__date__gte=month, receipt__issued_at__date__lt=add_months(month, 1)
-        )
+def _sections(lines) -> list[dict]:
+    """Spend per catalogue section (FR-07). Lines without a category are grouped under None."""
     rows = (
-        lines.values("product__category__parent__parent__name")
+        lines.values(
+            "product__category__parent__parent_id", "product__category__parent__parent__name"
+        )
         .annotate(spent=Sum("amount"), items=Count("id"))
         .order_by("-spent")
     )
     total = sum((r["spent"] for r in rows), ZERO)
+    return [
+        {
+            "id": r["product__category__parent__parent_id"],
+            "section": r["product__category__parent__parent__name"],
+            "spent": r["spent"],
+            "share": (r["spent"] / total * 100).quantize(Decimal("0.1")) if total else ZERO,
+            "items": r["items"],
+        }
+        for r in rows
+    ]
+
+
+def categories(month: date | None = None, period: Period = ALL_TIME) -> dict:
+    if month:
+        period = Period(month, add_months(month, 1) - timedelta(days=1))
+    sections = _sections(filtered_lines(period))
     return {
         "month": month_key(month) if month else None,
+        "total": sum((s["spent"] for s in sections), ZERO),
+        "sections": sections,
+    }
+
+
+def totals(period: Period, sections: Sections = ALL_SECTIONS) -> dict:
+    if sections.active:
+        agg = filtered_lines(period, sections).aggregate(
+            total=Sum("amount"), receipts=Count("receipt", distinct=True)
+        )
+    else:
+        agg = (
+            counted_receipts()
+            .filter(period.q())
+            .aggregate(total=Sum("total"), receipts=Count("id"))
+        )
+    total, receipts = agg["total"] or ZERO, agg["receipts"] or 0
+    return {
+        **period.as_dict(),
         "total": total,
-        "sections": [
-            {
-                "section": r["product__category__parent__parent__name"],
-                "spent": r["spent"],
-                "share": (r["spent"] / total * 100).quantize(Decimal("0.1")) if total else ZERO,
-                "items": r["items"],
-            }
-            for r in rows
+        "receipts": receipts,
+        "average_receipt": _average(total, receipts),
+    }
+
+
+ITEM_AGGREGATES = {
+    "spent": Sum("amount"),
+    "purchases": Count("receipt", distinct=True),
+    "quantity": Sum("quantity"),
+}
+
+
+def _bounds(period: Period) -> tuple[date, date]:
+    """The actual dates an open period covers: first receipt day to today."""
+    today = timezone.localdate()
+    start = period.start
+    if start is None:
+        first = counted_receipts().order_by("issued_at").values_list("issued_at", flat=True).first()
+        start = timezone.localtime(first).date() if first else today
+    return start, period.end or today
+
+
+def overview(period: Period, sections: Sections = ALL_SECTIONS, limit: int = 10) -> dict:
+    """Everything the spending page shows for a period and section filter (FR-14)."""
+    data = totals(period, sections)
+    start, end = _bounds(period)
+    months = max((end.year - start.year) * 12 + end.month - start.month + 1, 1)
+    previous = period.previous(timezone.localdate())
+
+    lines = filtered_lines(period, sections)
+    rows = _grouped(lines, ITEM_AGGREGATES)
+    return {
+        **data,
+        "sections_filter": sections.as_list(),
+        "months": months,
+        "average_month": _average(data["total"], months),
+        "previous": totals(previous, sections) if previous else None,
+        "by_spend": sorted(rows, key=lambda r: (-r["spent"], r["name"]))[:limit],
+        "by_purchases": sorted(rows, key=lambda r: (-r["purchases"], -r["spent"], r["name"]))[
+            :limit
         ],
+        "sections": _sections(lines),
+    }
+
+
+def compare(a: Period, b: Period, sections: Sections = ALL_SECTIONS, limit: int = 10) -> dict:
+    """Period A against baseline B: totals, per section and the items behind the change.
+
+    Each item's change is split into a price effect (what the same quantity would cost at
+    the new average price) and a quantity effect (the rest).
+    """
+    ta, tb = totals(a, sections), totals(b, sections)
+    diff = ta["total"] - tb["total"]
+
+    sec_a = {s["id"]: s for s in _sections(filtered_lines(a, sections))}
+    sec_b = {s["id"]: s for s in _sections(filtered_lines(b, sections))}
+    section_rows = []
+    for key in sec_a.keys() | sec_b.keys():
+        sa, sb = sec_a.get(key), sec_b.get(key)
+        spent_a = sa["spent"] if sa else ZERO
+        spent_b = sb["spent"] if sb else ZERO
+        section_rows.append(
+            {
+                "id": key,
+                "section": (sa or sb)["section"],
+                "a": spent_a,
+                "b": spent_b,
+                "diff": spent_a - spent_b,
+            }
+        )
+    section_rows.sort(key=lambda r: (-abs(r["diff"]), r["section"] or ""))
+
+    items_a = {r["key"]: r for r in _grouped(filtered_lines(a, sections), ITEM_AGGREGATES)}
+    items_b = {r["key"]: r for r in _grouped(filtered_lines(b, sections), ITEM_AGGREGATES)}
+    changes = []
+    for key in items_a.keys() | items_b.keys():
+        ia, ib = items_a.get(key), items_b.get(key)
+        identity = {k: v for k, v in (ia or ib).items() if k not in ITEM_AGGREGATES}
+        spent_a, spent_b = (ia or {}).get("spent", ZERO), (ib or {}).get("spent", ZERO)
+        qty_a = (ia or {}).get("quantity") or Decimal("0")
+        qty_b = (ib or {}).get("quantity") or Decimal("0")
+        price_effect = quantity_effect = None
+        if qty_a and qty_b:
+            price_effect = ((spent_a / qty_a - spent_b / qty_b) * qty_a).quantize(Decimal("0.01"))
+            quantity_effect = spent_a - spent_b - price_effect
+        changes.append(
+            {
+                **identity,
+                "a_spent": spent_a,
+                "b_spent": spent_b,
+                "diff": spent_a - spent_b,
+                "a_purchases": (ia or {}).get("purchases", 0),
+                "b_purchases": (ib or {}).get("purchases", 0),
+                "a_quantity": qty_a,
+                "b_quantity": qty_b,
+                "price_effect": price_effect,
+                "quantity_effect": quantity_effect,
+            }
+        )
+    return {
+        "a": ta,
+        "b": tb,
+        "diff": diff,
+        "diff_pct": (diff / tb["total"] * 100).quantize(Decimal("0.1")) if tb["total"] else None,
+        "sections_filter": sections.as_list(),
+        "sections": section_rows,
+        "increases": sorted(
+            (c for c in changes if c["diff"] > 0), key=lambda c: (-c["diff"], c["name"])
+        )[:limit],
+        "decreases": sorted(
+            (c for c in changes if c["diff"] < 0), key=lambda c: (c["diff"], c["name"])
+        )[:limit],
+        "new_items": sum(1 for c in changes if not c["b_purchases"]),
+        "dropped_items": sum(1 for c in changes if not c["a_purchases"]),
     }
 
 
@@ -219,8 +376,25 @@ def _price_stats(prices: list[Decimal]) -> dict:
     }
 
 
-def items(search: str = "", sort: str = "spent") -> list[dict]:
-    lines = product_lines()
+ITEM_STATUSES = ("identified", "unidentified")
+PRICE_TRENDS = ("up", "down")
+
+
+def items(
+    search: str = "",
+    sort: str = "spent",
+    period: Period = ALL_TIME,
+    sections: Sections = ALL_SECTIONS,
+    status: str = "",
+    min_purchases: int = 1,
+    trend: str = "",
+) -> list[dict]:
+    """Items bought in the period. Stats and the price trend only cover that period."""
+    lines = filtered_lines(period, sections)
+    if status == "identified":
+        lines = lines.filter(product__isnull=False)
+    elif status == "unidentified":
+        lines = lines.filter(product__isnull=True)
     if search:
         lines = lines.filter(Q(description__icontains=search) | Q(product__name__icontains=search))
 
@@ -247,6 +421,8 @@ def items(search: str = "", sort: str = "spent") -> list[dict]:
 
     result = []
     for row in rows:
+        if row["purchases"] < min_purchases:
+            continue
         prices = [price for price, _ in history[row["key"]]]
         result.append(
             {
@@ -264,6 +440,11 @@ def items(search: str = "", sort: str = "spent") -> list[dict]:
         "price_change": lambda r: (-(r["price_change_pct"] or 0), r["name"]),
         "name": lambda r: r["name"],
     }
+    if trend in PRICE_TRENDS:
+        sign = 1 if trend == "up" else -1
+        result = [
+            r for r in result if r["purchases"] > 1 and (r["price_change_pct"] or 0) * sign > 0
+        ]
     return sorted(result, key=sorters.get(sort, sorters["spent"]))
 
 

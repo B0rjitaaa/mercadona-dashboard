@@ -162,10 +162,63 @@ export interface ItemDetail extends Omit<Item, "trend"> {
   }[];
 }
 
+/** `id: null` groups lines without a catalogue category (filter token "none"). */
+export interface SectionSpend {
+  id: number | null;
+  section: string | null;
+  spent: Money;
+  share: string;
+  items: number;
+}
+
 export interface CategorySpend {
   month: string | null;
   total: Money;
-  sections: { section: string | null; spent: Money; share: string; items: number }[];
+  sections: SectionSpend[];
+}
+
+export interface PeriodTotals {
+  from: string | null;
+  to: string | null;
+  total: Money;
+  receipts: number;
+  average_receipt: Money;
+}
+
+export interface Overview extends PeriodTotals {
+  sections_filter: (number | "none")[];
+  months: number;
+  average_month: Money;
+  previous: PeriodTotals | null;
+  by_spend: TopItem[];
+  by_purchases: TopItem[];
+  sections: SectionSpend[];
+}
+
+export interface ItemChange extends ItemIdentity {
+  a_spent: Money;
+  b_spent: Money;
+  diff: Money;
+  a_purchases: number;
+  b_purchases: number;
+  a_quantity: string;
+  b_quantity: string;
+  /** null when the item was only bought in one of the periods */
+  price_effect: Money | null;
+  quantity_effect: Money | null;
+}
+
+export interface Comparison {
+  a: PeriodTotals;
+  b: PeriodTotals;
+  diff: Money;
+  diff_pct: string | null;
+  sections_filter: (number | "none")[];
+  sections: { id: number | null; section: string | null; a: Money; b: Money; diff: Money }[];
+  increases: ItemChange[];
+  decreases: ItemChange[];
+  new_items: number;
+  dropped_items: number;
 }
 
 export interface ProductSummary {

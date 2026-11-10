@@ -180,6 +180,34 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .segmented button { border: 0; background: transparent; padding: 5px 10px; color: var(--ink-2); }
 .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 
+/* Filter bar (FR-14): one row above the charts */
+.filter-bar {
+  display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center;
+  padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.filter-bar input[type="date"] { padding: 6px 8px; }
+.dropdown { position: relative; }
+.dropdown > summary {
+  list-style: none; cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 7px 30px 7px 10px; background: var(--surface); position: relative; white-space: nowrap;
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+}
+.dropdown > summary::-webkit-details-marker { display: none; }
+.dropdown > summary::after {
+  content: ""; position: absolute; right: 11px; top: 50%; width: 6px; height: 6px; margin-top: -5px;
+  border-right: 1.5px solid var(--ink-2); border-bottom: 1.5px solid var(--ink-2); transform: rotate(45deg);
+}
+.dropdown > summary.active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.dropdown > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dropdown-panel {
+  position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; min-width: 240px; max-height: 360px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; gap: 2px;
+}
+.check { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; }
+.check:hover { background: var(--surface-2); }
+.check input { margin: 0; }
+
 /* Tables */
 .table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
 table { width: 100%; border-collapse: collapse; }
@@ -257,3 +285,17 @@ tfoot td { font-weight: 600; border-top: 1px solid var(--axis); border-bottom: 0
 .review-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
 .review-head code { font-size: 15px; font-weight: 600; }
 .search-results { display: grid; gap: 6px; max-height: 320px; overflow-y: auto; }
+
+/* Text button that reads like a link (e.g. filter by a section from a list) */
+.link-button {
+  border: 0; background: none; padding: 0; color: var(--accent); font-weight: 400;
+  text-align: left; white-space: normal;
+}
+.link-button:hover { background: none; text-decoration: underline; }
+.link-button[aria-pressed="true"] { font-weight: 600; }
+tbody tr[aria-selected="true"] { background: var(--accent-soft); }
+
+/* Two thin bars per row: period (series) over baseline (muted), with a 2px gap */
+.pair-bars { display: flex; flex-direction: column; gap: 2px; min-width: 80px; }
+.pair-bars span { display: block; height: 6px; border-radius: 0 3px 3px 0; background: var(--series-1); min-width: 1px; }
+.pair-bars span.baseline { background: var(--series-1-muted); }
