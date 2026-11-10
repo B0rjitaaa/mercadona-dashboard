@@ -20,12 +20,13 @@ COMPOSE := $(if $(PROD),$(PROD_COMPOSE),docker compose)
 
 STAMP := $(shell date +%Y%m%d-%H%M%S)
 
-.PHONY: prod-up prod-down prod-logs prod-ps backup restore
+.PHONY: prod-up prod-down prod-logs prod-ps prod-backup-now backup restore
 
 prod-up:       ; $(PROD_COMPOSE) up -d --build
 prod-down:     ; $(PROD_COMPOSE) down
 prod-logs:     ; $(PROD_COMPOSE) logs -f
 prod-ps:       ; $(PROD_COMPOSE) ps
+prod-backup-now: ; $(PROD_COMPOSE) exec backup sh /usr/local/bin/backup.sh
 
 # Database dump + receipt PDFs into backups/ (git-ignored)
 backup:

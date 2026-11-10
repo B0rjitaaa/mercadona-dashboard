@@ -56,6 +56,25 @@ services:
     <<: *backend
     command: celery -A config beat -l info -s /tmp/celerybeat-schedule
 
+  # Daily database dump + receipt PDFs into ./backups (see deploy/backup.sh)
+  backup:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${TIME_ZONE:-Europe/Madrid}
+    volumes:
+      - ./backups:/backups
+      - ./deploy/backup.sh:/usr/local/bin/backup.sh:ro
+      - media:/media:ro
+    command: >
+      sh -c 'echo "${BACKUP_MINUTE:-30} ${BACKUP_HOUR:-3} * * * /bin/sh /usr/local/bin/backup.sh" | crontab - &&
+             exec crond -f -l 8'
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
   web:
     build:
       context: ./frontend
