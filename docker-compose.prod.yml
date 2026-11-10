@@ -1,11 +1,9 @@
 # Production stack (home server). Usage: make prod-up
 name: mercadona
 
+# Only `backend` builds the image; worker and beat reuse it (building the same tag
+# from three services in parallel fails on Docker 29).
 x-backend: &backend
-  build:
-    context: ./backend
-    args:
-      UV_SYNC_ARGS: --no-dev
   image: mercadona-backend:prod
   env_file: .env
   environment:
@@ -41,6 +39,10 @@ services:
 
   backend:
     <<: *backend
+    build:
+      context: ./backend
+      args:
+        UV_SYNC_ARGS: --no-dev
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput -v 0 &&
