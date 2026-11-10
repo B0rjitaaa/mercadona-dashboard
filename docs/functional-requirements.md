@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.7
+- **Document version:** 0.8
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -16,6 +16,7 @@
 | 0.4 | 2026-11-10 | FR-01: dedicated mailbox with forwarded receipts, sync strategy, retries and concurrency. Data model: GmailMessage. |
 | 0.5 | 2026-11-10 | FR-01: forward as attachment (.eml). FR-02: older receipt layout, return receipts, store identified by store code. |
 | 0.6 | 2026-11-10 | Roadmap: web UI brought forward before product identification; until phase 3, products are grouped by receipt description. |
+| 0.8 | 2026-11-10 | FR-13: price watch (alerts vs last price paid, yearly impact, recent catalogue changes, personal inflation). |
 | 0.7 | 2026-11-10 | FR-04: identification against a daily local copy of the whole catalogue (no remote search), matching algorithm and thresholds. FR-05: catalogue price history comes from the same daily download. |
 
 ---
@@ -289,6 +290,17 @@ Screen (or environment variables) for:
 - Data coming from receipts or from Mercadona's catalogue (product names, receipt descriptions, categories) is shown **as is**, not translated.
 - The backend API is language-neutral: it returns codes (e.g. receipt status `needs_review`) and the frontend translates them.
 
+### FR-13 · Price watch
+
+**Description:** A "Prices" page and a dashboard card follow the price of the products bought regularly.
+
+- **Regular product:** linked to the catalogue, bought at least 3 times, the last one within the last 180 days.
+- **Alerts:** current catalogue price vs the price paid last time, for changes of 1 % or more, with the **yearly impact** (difference × quantity bought in the last 12 months). Sorted by impact; filter up / down.
+- **Variable-weight products** (`approx_size` in the catalogue: meat trays, cheese wedges, fruit bags) are never compared with the paid price, since the receipt does not say how much they weighed; their catalogue price per kg is followed instead.
+- **Links to check:** a difference of 40 % or more is more likely a wrong link than a price change; such products are listed separately with a shortcut to fix the link.
+- **Recent catalogue changes:** regular products whose catalogue price changed in the last 7 / 30 / 90 days (from FR-05 history).
+- **Personal inflation (12 months):** catalogue price now vs the average price paid about a year ago (330–400 days), weighted by each product's spend over the last 12 months.
+
 ---
 
 ## 5. Non-functional requirements
@@ -488,7 +500,7 @@ Gmail ──(sync_gmail)──> PDF stored
 | **2 · Gmail** | OAuth, daily and manual sync, historical import (FR-01). |
 | **3 · Products** | Mercadona API integration, aliases and review inbox (FR-04). |
 | **4 · Analytics & UI** | Monthly spend, product page with charts, dashboard, multilingual UI (FR-06, FR-07, FR-09, FR-10, FR-12). **Brought forward before phase 3**: products are grouped by receipt description until they are linked to the catalogue; category breakdown (FR-07) and catalogue price (FR-06) arrive with phases 3 and 5. |
-| **5 · Prices** | Daily catalogue price tracking and alerts (FR-05). |
+| **5 · Prices** | Daily catalogue price tracking and alerts (FR-05, FR-13). |
 
 ---
 

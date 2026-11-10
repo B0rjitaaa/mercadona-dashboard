@@ -11,7 +11,8 @@
     "settings": "Ajustes",
     "label": "Navegación principal",
     "open": "Abrir menú",
-    "close": "Cerrar menú"
+    "close": "Cerrar menú",
+    "prices": "Precios"
   },
   "language": {
     "label": "Idioma",
@@ -85,7 +86,9 @@
     "neverSynced": "Todavía no se ha sincronizado.",
     "syncHint": "Se sincroniza automáticamente cada día a las 07:00.",
     "latestReceipts": "Últimos tickets",
-    "seeAll": "Ver todos"
+    "seeAll": "Ver todos",
+    "priceAlerts": "Alertas de precio",
+    "priceAlertsSubtitle": "Lo que compras habitualmente y hoy cuesta distinto en Mercadona"
   },
   "spending": {
     "title": "Gasto mensual",
@@ -301,5 +304,45 @@
     "catalogEmpty": "El catálogo de Mercadona aún no se ha descargado.",
     "noMatches": "Ninguna descripción coincide con el filtro.",
     "allDone": "¡Todo identificado! 🎉"
+  },
+  "prices": {
+    "title": "Precios",
+    "subtitle_one": "Vigilamos {{count}} producto que compras habitualmente (al menos {{min}} veces, la última en los últimos {{days}} días).",
+    "subtitle_other": "Vigilamos {{count}} productos que compras habitualmente (al menos {{min}} veces, la última en los últimos {{days}} días).",
+    "up": "Más caros",
+    "upFoot": "que la última vez que los compraste",
+    "down": "Más baratos",
+    "downFoot": "que la última vez que los compraste",
+    "impact": "Impacto anual",
+    "impactFoot": "si compras lo mismo que en los últimos 12 meses",
+    "inflation": "Tu inflación (12 meses)",
+    "inflationFoot_one": "sobre {{count}} producto que ya comprabas hace un año",
+    "inflationFoot_other": "sobre {{count}} productos que ya comprabas hace un año",
+    "inflationNone": "Sin compras de hace un año para comparar",
+    "alertsTitle": "Alertas",
+    "alertsSubtitle": "Precio actual en Mercadona frente al que pagaste la última vez (cambios de {{pct}} o más)",
+    "filter": "Filtrar alertas",
+    "filters": {
+      "all": "Todas",
+      "up": "Suben",
+      "down": "Bajan"
+    },
+    "noAlerts": "Ningún producto habitual ha cambiado de precio.",
+    "lastPaid": "Pagaste",
+    "now": "Ahora",
+    "impactCol": "Impacto/año",
+    "checkTitle": "Revisa estos enlaces",
+    "checkSubtitle": "La diferencia es de más del {{pct}}: puede que la descripción del ticket esté enlazada con otro producto.",
+    "paidVsNow": "{{paid}} → {{now}}",
+    "checkLink": "Revisar",
+    "recentTitle": "Cambios recientes en el catálogo",
+    "recentSubtitle": "Productos habituales que Mercadona ha subido o bajado",
+    "window": "Periodo",
+    "days_one": "{{count}} día",
+    "days_other": "{{count}} días",
+    "noRecent": "Aún no hay cambios en este periodo. El histórico de precios de catálogo empezó el {{date}} y se completa cada día.",
+    "before": "Antes",
+    "changedAt": "Fecha",
+    "variableWeight": "Peso variable, precio por kg"
   }
 }

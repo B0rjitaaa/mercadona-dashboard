@@ -14,4 +14,5 @@ urlpatterns = [
         name="analytics-product-detail",
     ),
     path("analytics/categories/", views.categories, name="analytics-categories"),
+    path("analytics/prices/", views.price_watch, name="analytics-prices"),
 ]
