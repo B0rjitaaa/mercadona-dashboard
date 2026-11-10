@@ -62,5 +62,15 @@ git pull && make prod-up
 
 ## Backups
 
-`make backup PROD=1` writes a database dump and a tarball of the receipt PDFs into
-`backups/` (git-ignored). Restore with `make restore PROD=1 DB=... MEDIA=...`.
+The `backup` service runs `deploy/backup.sh` every day at `BACKUP_HOUR:BACKUP_MINUTE`
+(03:30 by default): a database dump and a tarball of the receipt PDFs go into `backups/`
+(git-ignored) and files older than `BACKUP_KEEP_DAYS` (14) are deleted.
+
+```bash
+make prod-backup-now                 # run it immediately
+make prod-logs                       # "backup ok" lines from the backup service
+make restore PROD=1 DB=backups/db-<stamp>.dump MEDIA=backups/media-<stamp>.tar
+```
+
+The backups live on the same disk as the data: they protect against mistakes and
+broken updates, not against a dead disk. Copy `backups/` elsewhere from time to time.
