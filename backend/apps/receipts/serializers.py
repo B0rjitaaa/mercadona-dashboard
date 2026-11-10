@@ -6,7 +6,7 @@ from .models import Receipt, ReceiptLine, Store
 class StoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
-        fields = ["id", "chain", "address", "postal_code", "city", "phone"]
+        fields = ["id", "chain", "code", "address", "postal_code", "city", "phone"]
 
 
 class ReceiptLineSerializer(serializers.ModelSerializer):
@@ -33,6 +33,7 @@ class ReceiptListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "invoice_number",
+            "kind",
             "issued_at",
             "store",
             "total",
@@ -50,6 +51,7 @@ class ReceiptDetailSerializer(ReceiptListSerializer):
     class Meta(ReceiptListSerializer.Meta):
         fields = ReceiptListSerializer.Meta.fields + [
             "operation_number",
+            "original_invoice_number",
             "vat_breakdown",
             "warnings",
             "error_message",

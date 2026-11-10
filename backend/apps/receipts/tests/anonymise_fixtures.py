@@ -12,8 +12,9 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 REDACTIONS = [
     (re.compile(r"\*{4}( \*{4}){2} \d{4}"), "**** **** **** 0000"),
-    (re.compile(r"AUT: \d+"), "AUT: 000000"),
-    (re.compile(r"AID: \w+"), "AID: A0000000000000"),
+    (re.compile(r"AUT:\s*\d+"), "AUT: 000000"),
+    (re.compile(r"AID:\s*\w+"), "AID: A0000000000000"),
+    (re.compile(r"N\.C:\s*\d+"), "N.C: 000000000"),
 ]
 
 

@@ -121,3 +121,29 @@ def test_delete_removes_pdf(client, sample_pdf):
     assert response.status_code == 204
     assert not Receipt.objects.exists()
     assert not os.path.exists(path)
+
+
+def test_store_is_identified_by_code_not_address(client, sample_text):
+    upload(client, build_receipt_pdf(sample_text))
+    other_address = (
+        sample_text.replace("1234-001-000001", "1234-009-000009")
+        .replace("CALLE EJEMPLO, 1", "C/ EJEMPLO, 1")
+        .replace("28001 MADRID", "28001 Madrid")
+    )
+    upload(client, build_receipt_pdf(other_address))
+
+    store = Store.objects.get()
+    assert store.code == "1234"
+    assert store.city == "MADRID"
+    assert store.receipts.count() == 2
+
+
+def test_reprocess_command(client, sample_pdf):
+    from django.core.management import call_command
+
+    receipt_id = upload(client, sample_pdf).json()["id"]
+    Receipt.objects.filter(pk=receipt_id).update(status=Receipt.Status.ERROR)
+
+    call_command("reprocess_receipts", status="error")
+
+    assert Receipt.objects.get(pk=receipt_id).status == Receipt.Status.PROCESSED

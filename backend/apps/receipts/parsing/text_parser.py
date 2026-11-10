@@ -26,7 +26,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from .errors import ReceiptParseError
-from .types import LineType, ParsedLine, ParsedReceipt, Unit, VatRate
+from .types import LineType, ParsedLine, ParsedReceipt, ReceiptKind, Unit, VatRate
 
 AMOUNT = r"-?\d+(?:\.\d{3})*,\d{2}"
 
@@ -37,14 +37,20 @@ RE_DATE_OP = re.compile(
     r"(?P<date>\d{2}/\d{2}/\d{4})\s+(?P<time>\d{2}:\d{2})(?:\s+OP:?\s*(?P<op>\d+))?"
 )
 RE_INVOICE = re.compile(r"FACTURA\s+SIMPLIFICADA:?\s*(?P<number>[\d-]+)", re.IGNORECASE)
-RE_ITEMS_HEADER = re.compile(r"^Cnt\.?\s+Descripci[óo]n", re.IGNORECASE)
+RE_RETURN_NUMBER = re.compile(r"^DEVOLUCI[ÓO]N:?\s*(?P<number>\d[\d-]+)$", re.IGNORECASE)
+RE_ORIGINAL_INVOICE = re.compile(
+    r"FRA\.?\s+SIMPLIF\.?\s+ORIGEN:?\s*(?P<number>[\d-]+)", re.IGNORECASE
+)
+RE_BANNER = re.compile(r"^\*+.*\*+$")  # e.g. "***** DEVOLUCIÓN *****"
+# Newer receipts: "Cnt. Descripción P. Unit Importe"; older ones lack "Cnt."
+RE_ITEMS_HEADER = re.compile(r"^(?:Cnt\.?\s+)?Descripci[óo]n\s+P\.?\s*Unit", re.IGNORECASE)
 RE_TOTAL = re.compile(rf"^TOTAL\s*\(€\)\s*(?P<amount>{AMOUNT})$", re.IGNORECASE)
 
 RE_ITEM_UNIT_PRICE = re.compile(
-    rf"^(?P<qty>\d+)\s+(?P<desc>.+?)\s+(?P<unit_price>{AMOUNT})\s+(?P<amount>{AMOUNT})$"
+    rf"^(?P<qty>-?\d+)\s+(?P<desc>.+?)\s+(?P<unit_price>{AMOUNT})\s+(?P<amount>{AMOUNT})$"
 )
-RE_ITEM = re.compile(rf"^(?P<qty>\d+)\s+(?P<desc>.+?)\s+(?P<amount>{AMOUNT})$")
-RE_ITEM_NO_AMOUNT = re.compile(r"^(?P<qty>\d+)\s+(?P<desc>\D.*)$")
+RE_ITEM = re.compile(rf"^(?P<qty>-?\d+)\s+(?P<desc>.+?)\s+(?P<amount>{AMOUNT})$")
+RE_ITEM_NO_AMOUNT = re.compile(r"^(?P<qty>-?\d+)\s+(?P<desc>\D.*)$")
 RE_WEIGHT = re.compile(
     rf"^(?P<kg>\d+,\d{{1,3}})\s*kg\s+(?P<price>{AMOUNT})\s*€/kg\s+(?P<amount>{AMOUNT})$",
     re.IGNORECASE,
@@ -75,7 +81,7 @@ def parse_text(text: str) -> ParsedReceipt:
     try:
         items_start = next(i for i, line in enumerate(lines) if RE_ITEMS_HEADER.match(line))
     except StopIteration as exc:
-        raise ReceiptParseError("Items header ('Cnt. Descripción') not found") from exc
+        raise ReceiptParseError("Items header ('Descripción P. Unit Importe') not found") from exc
 
     _parse_header(lines[:items_start], receipt)
     rest = _parse_items(lines[items_start + 1 :], receipt)
@@ -96,8 +102,12 @@ def _parse_header(lines: list[str], receipt: ParsedReceipt) -> None:
         if not receipt.tax_id and (m := RE_COMPANY.match(line)):
             receipt.company_name = m["name"].rstrip(",").strip()
             receipt.tax_id = m["tax_id"]
-            if i + 1 < len(lines) and not RE_POSTAL.match(lines[i + 1]):
-                receipt.store_address = lines[i + 1]
+            following = [x for x in lines[i + 1 : i + 3] if not RE_BANNER.match(x)]
+            if following and not RE_POSTAL.match(following[0]):
+                receipt.store_address = following[0]
+        elif RE_BANNER.match(line):
+            if "DEVOLUCI" in line.upper():
+                receipt.kind = ReceiptKind.RETURN
         elif not receipt.postal_code and (m := RE_POSTAL.match(line)):
             receipt.postal_code = m["postal"]
             receipt.city = m["city"]
@@ -105,12 +115,19 @@ def _parse_header(lines: list[str], receipt: ParsedReceipt) -> None:
             receipt.phone = m["phone"].replace(" ", "")
         elif m := RE_INVOICE.search(line):
             receipt.invoice_number = m["number"]
+        elif m := RE_RETURN_NUMBER.match(line):
+            receipt.kind = ReceiptKind.RETURN
+            receipt.invoice_number = m["number"]
+        elif m := RE_ORIGINAL_INVOICE.search(line):
+            receipt.original_invoice_number = m["number"]
         elif m := RE_DATE_OP.search(line):
             receipt.issued_at = datetime.strptime(f"{m['date']} {m['time']}", "%d/%m/%Y %H:%M")
             receipt.operation_number = m["op"] or ""
 
 
-def _line_type(description: str, amount: Decimal) -> LineType:
+def _line_type(description: str, amount: Decimal, kind: ReceiptKind) -> LineType:
+    if kind == ReceiptKind.RETURN:
+        return LineType.RETURN
     if amount < 0:
         return LineType.DISCOUNT
     if any(keyword in description.upper() for keyword in OTHER_KEYWORDS):
@@ -126,7 +143,7 @@ def _parse_items(lines: list[str], receipt: ParsedReceipt) -> list[str]:
         receipt.lines.append(
             ParsedLine(
                 position=len(receipt.lines) + 1,
-                line_type=_line_type(description, amount),
+                line_type=_line_type(description, amount, receipt.kind),
                 description=description,
                 quantity=quantity,
                 unit=unit,
@@ -165,6 +182,12 @@ def _parse_items(lines: list[str], receipt: ParsedReceipt) -> list[str]:
             # Guard against descriptions that end in a number: only accept the
             # unit-price form when quantity x unit price equals the amount.
             if qty * unit_price == amount:
+                add(m["desc"], Decimal(qty), Unit.UNIT, unit_price, amount)
+                continue
+            # Returned items ("-1 RESERVA LONCHAS 25,00 -4,50") print a middle value
+            # that is not the unit price: derive the price from the amount instead.
+            if qty < 0 and amount < 0:
+                unit_price = (amount / qty).quantize(Decimal("0.01"))
                 add(m["desc"], Decimal(qty), Unit.UNIT, unit_price, amount)
                 continue
 
