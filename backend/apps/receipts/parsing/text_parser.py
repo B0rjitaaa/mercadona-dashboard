@@ -15,8 +15,10 @@ Expected layout (one item per line once extracted from the PDF):
     0,728 kg 3,20 €/kg 2,33
     TOTAL (€) 43,55
     TARJETA BANCARIA 43,55
-    IVA BASE IMPONIBLE (€) CUOTA (€)
-    10% 30,46 3,05
+    IVA BASE IMP. (€) CUOTA (€) TOTAL (€)
+    4% 9,13 0,36 9,49
+    TOTAL 39,47 4,08 43,55
+    TARJ. BANCARIA: **** **** **** 1234
 """
 
 import re
@@ -48,8 +50,11 @@ RE_WEIGHT = re.compile(
     re.IGNORECASE,
 )
 RE_PAYMENT = re.compile(rf"^(?P<method>\D.+?)\s+(?P<amount>{AMOUNT})$")
-RE_VAT_HEADER = re.compile(r"^IVA\s+BASE\s+IMPONIBLE", re.IGNORECASE)
-RE_VAT_ROW = re.compile(rf"^(?P<rate>\d+(?:,\d+)?)\s*%\s+(?P<base>{AMOUNT})\s+(?P<tax>{AMOUNT})$")
+RE_VAT_HEADER = re.compile(r"^IVA\s+BASE\s+IMP", re.IGNORECASE)
+RE_VAT_ROW = re.compile(
+    rf"^(?P<rate>\d+(?:,\d+)?)\s*%\s+(?P<base>{AMOUNT})\s+(?P<tax>{AMOUNT})"
+    rf"(?:\s+(?P<total>{AMOUNT}))?$"
+)
 
 OTHER_KEYWORDS = ("PARKING", "APARCAMIENTO")
 
@@ -188,6 +193,7 @@ def _parse_footer(lines: list[str], receipt: ParsedReceipt) -> None:
                         rate=to_decimal(m["rate"]) if "," in m["rate"] else Decimal(m["rate"]),
                         base=to_decimal(m["base"]),
                         tax=to_decimal(m["tax"]),
+                        total=to_decimal(m["total"]) if m["total"] else None,
                     )
                 )
             continue

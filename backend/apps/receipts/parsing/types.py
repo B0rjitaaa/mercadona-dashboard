@@ -33,6 +33,7 @@ class VatRate:
     rate: Decimal  # percentage, e.g. Decimal("10")
     base: Decimal
     tax: Decimal
+    total: Decimal | None = None  # base + tax, printed on newer receipts
 
 
 @dataclass
