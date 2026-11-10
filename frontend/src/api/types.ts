@@ -209,3 +209,38 @@ export interface GmailStatus {
   query: string;
   last_run: JobRun | null;
 }
+
+export interface PriceRow extends ItemIdentity {
+  unit: Unit;
+  variable_weight: boolean;
+  catalog_per_kg: boolean;
+  purchases: number;
+  quantity_12m: string;
+  spent_12m: Money;
+  last_paid: Money;
+  last_paid_at: string;
+  catalog_price: Money;
+  diff: Money | null;
+  diff_pct: string | null;
+  impact_12m: Money | null;
+  is_active: boolean;
+  catalog_previous: Money | null;
+  catalog_changed_at: string | null;
+  catalog_change_pct: string | null;
+}
+
+export interface PriceWatch {
+  regular_products: number;
+  summary: {
+    up: number;
+    down: number;
+    impact_12m: Money;
+    inflation_12m: string | null;
+    inflation_products: number;
+  };
+  alerts: PriceRow[];
+  check_links: PriceRow[];
+  recent_changes: PriceRow[];
+  recent_days: number;
+  rules: { min_purchases: number; within_days: number; min_pct: string; suspicious_pct: string };
+}

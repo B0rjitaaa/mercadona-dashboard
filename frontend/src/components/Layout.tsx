@@ -11,6 +11,7 @@ const LINKS: { to: string; key: string; icon: IconName }[] = [
   { to: "/spending", key: "nav.spending", icon: "chart" },
   { to: "/receipts", key: "nav.receipts", icon: "receipt" },
   { to: "/products", key: "nav.products", icon: "box" },
+  { to: "/prices", key: "nav.prices", icon: "tag" },
   { to: "/review", key: "nav.review", icon: "inbox" },
   { to: "/settings", key: "nav.settings", icon: "settings" },
 ];

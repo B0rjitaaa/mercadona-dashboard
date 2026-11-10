@@ -10,6 +10,7 @@ import type {
   ItemDetail,
   JobRun,
   MonthSpend,
+  PriceWatch,
   Paginated,
   ReceiptDetail,
   ReceiptSummary,
@@ -49,6 +50,13 @@ export const useItem = (key: string) =>
       key.startsWith("p")
         ? api.get<ItemDetail>(`/analytics/products/${key.slice(1)}/`)
         : api.get<ItemDetail>(`/analytics/items/detail/${qs({ description: key.slice(2) })}`),
+  });
+
+export const usePriceWatch = (days = 30) =>
+  useQuery({
+    queryKey: ["prices", days],
+    queryFn: () => api.get<PriceWatch>(`/analytics/prices/${qs({ days })}`),
+    placeholderData: keepPreviousData,
   });
 
 export const useCategories = (month?: string) =>

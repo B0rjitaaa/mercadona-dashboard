@@ -54,10 +54,10 @@ export function useFormatters() {
     /** "2026-11" -> "nov 26" */
     monthShort: (key: string) =>
       new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }).format(monthDate(key)),
-    /** "2026-11" -> "Noviembre de 2026" (first letter only, as a heading) */
-    monthLong: (key: string) => {
+    /** "2026-11" -> "Noviembre de 2026" as a heading, or "noviembre de 2026" mid-sentence */
+    monthLong: (key: string, heading = true) => {
       const text = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(monthDate(key));
-      return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+      return heading ? text.charAt(0).toLocaleUpperCase(locale) + text.slice(1) : text;
     },
   };
 }

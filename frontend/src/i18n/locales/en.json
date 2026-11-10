@@ -11,7 +11,8 @@
     "settings": "Settings",
     "label": "Main navigation",
     "open": "Open menu",
-    "close": "Close menu"
+    "close": "Close menu",
+    "prices": "Prices"
   },
   "language": {
     "label": "Language",
@@ -85,7 +86,9 @@
     "neverSynced": "Not synced yet.",
     "syncHint": "Syncs automatically every day at 07:00.",
     "latestReceipts": "Latest receipts",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "priceAlerts": "Price alerts",
+    "priceAlertsSubtitle": "Things you buy regularly that cost something different at Mercadona today"
   },
   "spending": {
     "title": "Monthly spending",
@@ -301,5 +304,45 @@
     "catalogEmpty": "Mercadona's catalogue has not been downloaded yet.",
     "noMatches": "No description matches the filter.",
     "allDone": "Everything is identified! 🎉"
+  },
+  "prices": {
+    "title": "Prices",
+    "subtitle_one": "Watching {{count}} product you buy regularly (at least {{min}} times, the last one within {{days}} days).",
+    "subtitle_other": "Watching {{count}} products you buy regularly (at least {{min}} times, the last one within {{days}} days).",
+    "up": "More expensive",
+    "upFoot": "than the last time you bought them",
+    "down": "Cheaper",
+    "downFoot": "than the last time you bought them",
+    "impact": "Yearly impact",
+    "impactFoot": "if you buy the same as in the last 12 months",
+    "inflation": "Your inflation (12 months)",
+    "inflationFoot_one": "over {{count}} product you were already buying a year ago",
+    "inflationFoot_other": "over {{count}} products you were already buying a year ago",
+    "inflationNone": "No purchases from a year ago to compare",
+    "alertsTitle": "Alerts",
+    "alertsSubtitle": "Current Mercadona price vs what you paid last time (changes of {{pct}} or more)",
+    "filter": "Filter alerts",
+    "filters": {
+      "all": "All",
+      "up": "Up",
+      "down": "Down"
+    },
+    "noAlerts": "None of your regular products has changed price.",
+    "lastPaid": "You paid",
+    "now": "Now",
+    "impactCol": "Impact/year",
+    "checkTitle": "Check these links",
+    "checkSubtitle": "The difference is above {{pct}}: the receipt description may be linked to the wrong product.",
+    "paidVsNow": "{{paid}} → {{now}}",
+    "checkLink": "Check",
+    "recentTitle": "Recent catalogue changes",
+    "recentSubtitle": "Regular products whose Mercadona price went up or down",
+    "window": "Period",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "noRecent": "No changes in this period yet. Catalogue price history started on {{date}} and grows every day.",
+    "before": "Before",
+    "changedAt": "Date",
+    "variableWeight": "Variable weight, price per kg"
   }
 }
