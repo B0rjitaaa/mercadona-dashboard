@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.5
+- **Document version:** 0.6
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -15,6 +15,7 @@
 | 0.3 | 2026-11-10 | Gmail sender address (FR-01). Real receipt layout: VAT table and payment details (FR-02). Git branching model (NFR-11). Test fixture privacy (NFR-08). |
 | 0.4 | 2026-11-10 | FR-01: dedicated mailbox with forwarded receipts, sync strategy, retries and concurrency. Data model: GmailMessage. |
 | 0.5 | 2026-11-10 | FR-01: forward as attachment (.eml). FR-02: older receipt layout, return receipts, store identified by store code. |
+| 0.6 | 2026-11-10 | Roadmap: web UI brought forward before product identification; until phase 3, products are grouped by receipt description. |
 
 ---
 
@@ -484,7 +485,7 @@ Gmail ──(sync_gmail)──> PDF stored
 | **1 · Foundation** | docker compose with every service, models, Django admin, manual PDF upload and parser (FR-02, FR-03, FR-08 API). |
 | **2 · Gmail** | OAuth, daily and manual sync, historical import (FR-01). |
 | **3 · Products** | Mercadona API integration, aliases and review inbox (FR-04). |
-| **4 · Analytics & UI** | Monthly spend, product page with charts, dashboard, multilingual UI (FR-06, FR-07, FR-09, FR-10, FR-12). |
+| **4 · Analytics & UI** | Monthly spend, product page with charts, dashboard, multilingual UI (FR-06, FR-07, FR-09, FR-10, FR-12). **Brought forward before phase 3**: products are grouped by receipt description until they are linked to the catalogue; category breakdown (FR-07) and catalogue price (FR-06) arrive with phases 3 and 5. |
 | **5 · Prices** | Daily catalogue price tracking and alerts (FR-05). |
 
 ---
