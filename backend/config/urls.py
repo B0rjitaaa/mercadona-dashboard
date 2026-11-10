@@ -8,4 +8,5 @@ urlpatterns = [
     path("api/", include("apps.core.urls")),
     path("api/", include("apps.receipts.urls")),
     path("api/", include("apps.gmail_sync.urls")),
+    path("api/", include("apps.analytics.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
