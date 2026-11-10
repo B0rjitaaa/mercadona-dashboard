@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useMonthly, useOverview, usePriceWatch, useReceipts, useSummary } from "../../api/queries";
+import { useMonthly, useOverview, usePriceWatch, useReceipts, useSummary, useWeekly } from "../../api/queries";
 import { FilterBar, useRangeLabel } from "../../components/filters/FilterBar";
 import { ItemCell } from "../../components/ItemCell";
 import { SpendBarChart } from "../../components/charts/SpendBarChart";
@@ -9,7 +9,7 @@ import { SyncButton } from "../../components/SyncButton";
 import { Card, Delta, ErrorState, Loading, PageHeader, StatTile } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
 import { useFilters } from "../../lib/filters";
-import { monthPeriod, writePeriod } from "../../lib/period";
+import { monthPeriod, withinOneMonth, writePeriod } from "../../lib/period";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -21,7 +21,10 @@ export function DashboardPage() {
   const period = filters.range;
   const summary = useSummary();
   const overview = useOverview(period);
+  // A period inside one month (this month, last month...) is shown week by week
+  const byWeek = withinOneMonth(period);
   const monthly = useMonthly(period);
+  const weekly = useWeekly(period, byWeek);
   const latest = useReceipts({ page: 1 });
   const prices = usePriceWatch();
 
@@ -97,11 +100,30 @@ export function DashboardPage() {
 
       <div className="grid grid-main">
         <Card
-          title={t("dashboard.chartTitle")}
-          subtitle={`${rangeLabel(period)} · ${t("dashboard.chartSubtitle")}`}
+          title={t(byWeek ? "dashboard.chartTitleWeekly" : "dashboard.chartTitle")}
+          subtitle={`${rangeLabel(period)} · ${t(byWeek ? "dashboard.chartSubtitleWeekly" : "dashboard.chartSubtitle")}`}
           actions={<Link to="/spending">{t("dashboard.seeSpending")}</Link>}
         >
-          {monthly.data ? (
+          {byWeek ? (
+            weekly.data ? (
+              <SpendBarChart
+                ariaLabel={t("dashboard.chartTitleWeekly")}
+                data={weekly.data.map((w) => ({
+                  key: `${w.start}/${w.end}`,
+                  value: Number(w.total),
+                  extra: t("dashboard.receiptsCount", { count: w.receipts }),
+                }))}
+                formatTick={(key) => f.dayRange(...splitWeek(key))}
+                formatTitle={(key) => f.dayRange(...splitWeek(key), true)}
+                onSelect={(key) => {
+                  const [from, to] = splitWeek(key);
+                  navigate(`/spending?${writePeriod(new URLSearchParams(), { preset: "custom", from, to })}`);
+                }}
+              />
+            ) : (
+              <Loading rows={6} />
+            )
+          ) : monthly.data ? (
             <SpendBarChart
               ariaLabel={t("dashboard.chartTitle")}
               data={monthly.data.map((m) => ({
@@ -175,4 +197,9 @@ export function DashboardPage() {
       </Card>
     </div>
   );
+}
+
+function splitWeek(key: string): [string, string] {
+  const [from, to] = key.split("/");
+  return [from, to];
 }

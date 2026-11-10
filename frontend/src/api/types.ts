@@ -79,6 +79,13 @@ export interface JobRun {
   error: string;
 }
 
+export interface WeekSpend {
+  start: string; // YYYY-MM-DD, clipped to the period
+  end: string;
+  total: Money;
+  receipts: number;
+}
+
 export interface MonthSpend {
   month: string; // YYYY-MM
   total: Money;

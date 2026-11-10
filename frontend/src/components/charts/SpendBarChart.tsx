@@ -5,24 +5,29 @@ import { niceTicks } from "../../lib/ticks";
 import { ChartTooltip } from "./ChartTooltip";
 
 export interface SpendBar {
-  key: string; // YYYY-MM
+  key: string; // YYYY-MM unless the chart is given its own formatters
   value: number;
   extra?: string;
 }
 
-/** Single-series column chart of spend per month. Click a column to select it. */
+/** Single-series column chart of spend per month (or per any bucket with `formatTick` and
+ * `formatTitle`). Click a column to select it. */
 export function SpendBarChart({
   data,
   selected,
   onSelect,
   height = 260,
   ariaLabel,
+  formatTick,
+  formatTitle,
 }: {
   data: SpendBar[];
   selected?: string;
   onSelect?: (key: string) => void;
   height?: number;
   ariaLabel: string;
+  formatTick?: (key: string) => string;
+  formatTitle?: (key: string) => string;
 }) {
   const f = useFormatters();
   const c = useCssVars(["series-1", "series-1-muted", "grid", "axis", "muted", "surface-2"] as const);
@@ -36,7 +41,7 @@ export function SpendBarChart({
           <CartesianGrid vertical={false} stroke={c.grid} />
           <XAxis
             dataKey="key"
-            tickFormatter={f.monthShort}
+            tickFormatter={formatTick ?? f.monthShort}
             tickLine={false}
             axisLine={{ stroke: c.axis }}
             tick={{ fill: c.muted, fontSize: 12 }}
@@ -57,7 +62,7 @@ export function SpendBarChart({
             content={({ active, payload }) =>
               active && payload?.length ? (
                 <ChartTooltip
-                  title={f.monthLong(payload[0].payload.key)}
+                  title={(formatTitle ?? f.monthLong)(payload[0].payload.key)}
                   value={f.currency(payload[0].payload.value)}
                   extra={payload[0].payload.extra}
                 />

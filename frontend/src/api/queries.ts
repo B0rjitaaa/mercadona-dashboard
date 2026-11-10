@@ -12,6 +12,7 @@ import type {
   ItemDetail,
   JobRun,
   MonthSpend,
+  WeekSpend,
   PriceWatch,
   ReportStatus,
   Paginated,
@@ -37,6 +38,14 @@ export const useMonthly = (filters: FilterQuery) =>
       api.get<MonthSpend[]>(
         `/analytics/monthly/${qs({ ...filters, months: filters.from || filters.to ? undefined : "all" })}`,
       ),
+    placeholderData: keepPreviousData,
+  });
+
+export const useWeekly = (filters: FilterQuery, enabled = true) =>
+  useQuery({
+    queryKey: ["weekly", filters],
+    queryFn: () => api.get<WeekSpend[]>(`/analytics/weekly/${qs({ ...filters })}`),
+    enabled,
     placeholderData: keepPreviousData,
   });
 

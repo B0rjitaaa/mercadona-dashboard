@@ -76,6 +76,8 @@
     "allTime": "Total registrado",
     "chartTitle": "Gasto por mes",
     "chartSubtitle": "Pulsa un mes para ver el detalle",
+    "chartTitleWeekly": "Gasto por semana",
+    "chartSubtitleWeekly": "Pulsa una semana para ver el detalle",
     "seeSpending": "Ver gasto mensual",
     "syncTitle": "Sincronización con Gmail",
     "lastSync": "Última",

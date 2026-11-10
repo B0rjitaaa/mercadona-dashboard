@@ -221,6 +221,28 @@ def test_bad_filters_are_rejected(client, params):
     assert client.get(reverse("analytics-overview"), params).status_code == 400
 
 
+def test_weekly_clips_weeks_to_the_month_and_today(client, data):
+    rows = client.get(reverse("analytics-weekly"), {"from": "2026-11-01"}).json()
+
+    # 1 Nov 2026 is a Sunday; today is Tuesday 10 Nov
+    assert rows == [
+        {"start": "2026-11-01", "end": "2026-11-01", "total": "1.20", "receipts": 1},
+        {"start": "2026-11-02", "end": "2026-11-08", "total": "3.10", "receipts": 1},
+        {"start": "2026-11-09", "end": "2026-11-10", "total": "0.00", "receipts": 0},
+    ]
+
+
+def test_weekly_with_sections_and_bounds(client, data):
+    params = {"from": "2026-09-01", "to": "2026-09-30", "sections": "none"}
+    rows = client.get(reverse("analytics-weekly"), params).json()
+
+    assert rows[0] == {"start": "2026-09-01", "end": "2026-09-06", "total": "2.00", "receipts": 1}
+    assert rows[-1]["end"] == "2026-09-30"
+    assert client.get(reverse("analytics-weekly")).status_code == 400
+    too_long = {"from": "2024-01-01", "to": "2026-01-01"}
+    assert client.get(reverse("analytics-weekly"), too_long).status_code == 400
+
+
 def test_monthly_with_period(client, data):
     rows = client.get(
         reverse("analytics-monthly"), {"from": "2026-09-01", "to": "2026-10-31"}

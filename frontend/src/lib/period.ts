@@ -72,6 +72,13 @@ export function monthPeriod(key: string): PeriodValue {
   return { preset: "custom", from: `${key}-01`, to: isoDate(new Date(y, m, 0)) };
 }
 
+/** True when the range starts and ends (an open end means today) in the same calendar month. */
+export function withinOneMonth(range: Range, today = new Date()): boolean {
+  if (!range.from) return false;
+  const end = range.to ?? isoDate(today);
+  return range.from.slice(0, 7) === end.slice(0, 7) && range.from <= end;
+}
+
 /** "YYYY-MM" when the range is exactly one calendar month. */
 export function singleMonth(range: Range): string | null {
   if (!range.from || !range.to || !range.from.endsWith("-01")) return null;
