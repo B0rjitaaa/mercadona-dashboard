@@ -36,7 +36,7 @@ class ReceiptViewSet(
             .order_by("-issued_at", "-created_at")
         )
         if self.action == "retrieve":
-            qs = qs.prefetch_related("lines")
+            qs = qs.prefetch_related("lines__product")
 
         params = self.request.query_params
         if value := params.get("status"):

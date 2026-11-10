@@ -81,6 +81,9 @@ def test_list_detail_and_filters(client, sample_pdf):
     detail = client.get(reverse("receipt-detail", args=[receipt_id])).json()
     assert detail["lines"][-1] == {
         "id": detail["lines"][-1]["id"],
+        "product": None,
+        "product_name": None,
+        "product_thumbnail": None,
         "position": 14,
         "line_type": "product",
         "description": "PLATANO",

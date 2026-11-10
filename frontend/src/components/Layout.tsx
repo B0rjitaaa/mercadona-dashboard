@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useSummary } from "../api/queries";
+import { useCatalogStatus, useSummary } from "../api/queries";
 import { SUPPORTED_LANGUAGES } from "../i18n";
 import { useTheme, type ThemeChoice } from "../lib/theme";
 import { Icon, type IconName } from "./Icon";
@@ -22,6 +22,8 @@ export function Layout() {
   const location = useLocation();
   const summary = useSummary();
   const pending = summary.data ? summary.data.pending.needs_review + summary.data.pending.error : 0;
+  const catalog = useCatalogStatus();
+  const unmatched = catalog.data?.unmatched ?? 0;
 
   useEffect(() => setOpen(false), [location.pathname]);
 
@@ -54,6 +56,11 @@ export function Layout() {
             {link.to === "/receipts" && pending > 0 && (
               <span className="nav-badge" title={t("dashboard.pendingTitle")}>
                 {pending}
+              </span>
+            )}
+            {link.to === "/review" && unmatched > 0 && (
+              <span className="nav-badge" style={{ background: "var(--surface-2)", color: "var(--ink-2)" }}>
+                {unmatched}
               </span>
             )}
           </NavLink>

@@ -1,7 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, qs } from "./client";
 import type {
+  CatalogStatus,
+  CategorySpend,
   GmailStatus,
+  ProductSummary,
+  ReviewItem,
   Item,
   ItemDetail,
   JobRun,
@@ -37,10 +41,39 @@ export const useItems = (search: string, sort: string) =>
     placeholderData: keepPreviousData,
   });
 
-export const useItem = (description: string) =>
+/** "p123" -> catalogue product 123; "d:LECHE DESN" -> unidentified receipt description. */
+export const useItem = (key: string) =>
   useQuery({
-    queryKey: ["item", description],
-    queryFn: () => api.get<ItemDetail>(`/analytics/items/detail/${qs({ description })}`),
+    queryKey: ["item", key],
+    queryFn: () =>
+      key.startsWith("p")
+        ? api.get<ItemDetail>(`/analytics/products/${key.slice(1)}/`)
+        : api.get<ItemDetail>(`/analytics/items/detail/${qs({ description: key.slice(2) })}`),
+  });
+
+export const useCategories = (month?: string) =>
+  useQuery({
+    queryKey: ["categories", month],
+    queryFn: () => api.get<CategorySpend>(`/analytics/categories/${qs({ month })}`),
+    placeholderData: keepPreviousData,
+  });
+
+export const useReview = () =>
+  useQuery({ queryKey: ["review"], queryFn: () => api.get<ReviewItem[]>("/review/") });
+
+export const useCatalogStatus = () =>
+  useQuery({
+    queryKey: ["catalog-status"],
+    queryFn: () => api.get<CatalogStatus>("/catalog/status/"),
+    refetchInterval: (query) => (query.state.data?.last_sync?.status === "running" ? 3000 : false),
+  });
+
+export const useCatalogSearch = (q: string) =>
+  useQuery({
+    queryKey: ["catalog-search", q],
+    queryFn: () => api.get<ProductSummary[]>(`/catalog/search/${qs({ q })}`),
+    enabled: q.trim().length >= 2,
+    placeholderData: keepPreviousData,
   });
 
 export interface ReceiptFilters {
@@ -120,4 +153,55 @@ export function useReprocessReceipt(id: number) {
 export function useDeleteReceipt(id: number) {
   const invalidate = useInvalidateAll();
   return useMutation({ mutationFn: () => api.delete(`/receipts/${id}/`), onSuccess: invalidate });
+}
+
+function jsonBody(data: unknown): BodyInit {
+  return new Blob([JSON.stringify(data)], { type: "application/json" });
+}
+
+export function useLinkDescription() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: (v: { description: string; product_id: number }) => api.post("/review/link/", jsonBody(v)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUnlinkDescription() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: (description: string) => api.post("/review/unlink/", jsonBody({ description })),
+    onSuccess: () => {
+      invalidate();
+      setTimeout(invalidate, 2000);
+    },
+  });
+}
+
+export function useManualProduct() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: (v: { description: string; name: string }) =>
+      api.post<ProductSummary>("/review/manual/", jsonBody(v)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRematch() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: () => api.post("/review/rematch/"),
+    onSuccess: () => {
+      setTimeout(invalidate, 2000);
+      setTimeout(invalidate, 8000);
+    },
+  });
+}
+
+export function useCatalogSync() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: () => api.post("/catalog/sync/"),
+    onSuccess: () => setTimeout(invalidate, 1500),
+  });
 }

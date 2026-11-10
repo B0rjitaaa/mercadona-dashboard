@@ -68,8 +68,24 @@ def items(request):
 
 @api_view(["GET"])
 def item_detail(request):
+    """An unidentified item, by receipt description."""
     description = request.query_params.get("description", "")
-    data = services.item_detail(description) if description else None
+    data = services.item_detail(description=description) if description else None
     if data is None:
         raise NotFound("Item not found.")
     return Response(_json(data))
+
+
+@api_view(["GET"])
+def product_detail(request, product_id: int):
+    data = services.item_detail(product_id=product_id)
+    if data is None:
+        raise NotFound("Product not found.")
+    return Response(_json(data))
+
+
+@api_view(["GET"])
+def categories(request):
+    """?month=YYYY-MM (default: all time)."""
+    month = request.query_params.get("month")
+    return Response(_json(services.categories(_parse_month(month) if month else None)))

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { useGmailStatus, useJobs } from "../../api/queries";
+import { useCatalogStatus, useCatalogSync, useGmailStatus, useJobs } from "../../api/queries";
+import { Icon } from "../../components/Icon";
 import { SyncButton } from "../../components/SyncButton";
 import { Card, Loading, PageHeader } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
@@ -10,6 +11,10 @@ export function SettingsPage() {
   const gmail = useGmailStatus();
   const jobs = useJobs();
   const g = gmail.data;
+  const catalog = useCatalogStatus();
+  const catalogSync = useCatalogSync();
+  const c = catalog.data;
+  const statLabel = (key: string) => t(`settings.stat.${key}`, { defaultValue: key });
 
   return (
     <div className="page">
@@ -41,6 +46,31 @@ export function SettingsPage() {
         )}
       </Card>
 
+      <Card
+        title={t("settings.catalogTitle")}
+        actions={
+          <button onClick={() => catalogSync.mutate()} disabled={catalogSync.isPending || c?.last_sync?.status === "running"}>
+            <Icon name="refresh" />
+            {catalogSync.isSuccess || c?.last_sync?.status === "running" ? t("settings.catalogSyncQueued") : t("settings.catalogSync")}
+          </button>
+        }
+      >
+        {c ? (
+          <dl className="kv">
+            <dt>{t("settings.catalogProducts")}</dt>
+            <dd className="num">{t("settings.catalogProductsValue", { total: c.products, active: c.active })}</dd>
+            <dt>{t("settings.catalogLinked")}</dt>
+            <dd className="num">{t("settings.catalogLinkedValue", { aliases: c.aliases, unmatched: c.unmatched })}</dd>
+            <dt>{t("settings.lastCatalogSync")}</dt>
+            <dd>{c.last_sync ? f.dateTime(c.last_sync.finished_at ?? c.last_sync.started_at) : t("settings.never")}</dd>
+            <dt>{t("settings.schedule")}</dt>
+            <dd>{t("settings.catalogScheduleValue")}</dd>
+          </dl>
+        ) : (
+          <Loading />
+        )}
+      </Card>
+
       <Card title={t("settings.jobsTitle")}>
         {jobs.data ? (
           <div className="table-wrap">
@@ -50,9 +80,7 @@ export function SettingsPage() {
                   <th>{t("settings.started")}</th>
                   <th>{t("settings.job")}</th>
                   <th>{t("settings.result")}</th>
-                  <th className="right">{t("settings.messages")}</th>
-                  <th className="right">{t("settings.created")}</th>
-                  <th className="right">{t("settings.duplicates")}</th>
+                  <th>{t("settings.details")}</th>
                   <th>{t("settings.error")}</th>
                 </tr>
               </thead>
@@ -60,15 +88,18 @@ export function SettingsPage() {
                 {jobs.data.results.map((j) => (
                   <tr key={j.id}>
                     <td>{f.dateTime(j.started_at)}</td>
-                    <td className="secondary">{j.job}</td>
+                    <td className="secondary">{t(`settings.jobName.${j.job}`, { defaultValue: j.job })}</td>
                     <td>
                       <span className={`badge ${j.status === "success" ? "good" : j.status === "failed" ? "critical" : "info"}`}>
                         {t(`job.${j.status}`)}
                       </span>
                     </td>
-                    <td className="right num">{j.stats.new_messages ?? "—"}</td>
-                    <td className="right num">{j.stats.receipts_created ?? "—"}</td>
-                    <td className="right num">{j.stats.duplicates ?? "—"}</td>
+                    <td className="wrap secondary" style={{ fontSize: 13 }}>
+                      {Object.entries(j.stats)
+                        .filter(([, v]) => v)
+                        .map(([k, v]) => `${statLabel(k)}: ${f.number(v)}`)
+                        .join(" · ") || "—"}
+                    </td>
                     <td className="wrap secondary">{j.error || "—"}</td>
                   </tr>
                 ))}
