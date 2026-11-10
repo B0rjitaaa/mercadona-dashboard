@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.8
+- **Document version:** 0.9
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -16,8 +16,9 @@
 | 0.4 | 2026-11-10 | FR-01: dedicated mailbox with forwarded receipts, sync strategy, retries and concurrency. Data model: GmailMessage. |
 | 0.5 | 2026-11-10 | FR-01: forward as attachment (.eml). FR-02: older receipt layout, return receipts, store identified by store code. |
 | 0.6 | 2026-11-10 | Roadmap: web UI brought forward before product identification; until phase 3, products are grouped by receipt description. |
-| 0.8 | 2026-11-10 | FR-13: price watch (alerts vs last price paid, yearly impact, recent catalogue changes, personal inflation). |
 | 0.7 | 2026-11-10 | FR-04: identification against a daily local copy of the whole catalogue (no remote search), matching algorithm and thresholds. FR-05: catalogue price history comes from the same daily download. |
+| 0.8 | 2026-11-10 | FR-13: price watch (alerts vs last price paid, yearly impact, recent catalogue changes, personal inflation). |
+| 0.9 | 2026-11-10 | FR-14: dynamic filters (period and section on every analytics page, period comparison, product filters). Production deployment and daily backups (section 11). |
 
 ---
 
@@ -301,6 +302,17 @@ Screen (or environment variables) for:
 - **Recent catalogue changes:** regular products whose catalogue price changed in the last 7 / 30 / 90 days (from FR-05 history).
 - **Personal inflation (12 months):** catalogue price now vs the average price paid about a year ago (330–400 days), weighted by each product's spend over the last 12 months.
 
+### FR-14 · Dynamic filters
+
+**Description:** Every analytics page can be narrowed down, and two periods can be compared.
+
+- **Period** (Home, Spending, Products): this month, last month, last 3 / 6 / 12 months, this year, last year, all time or custom dates. The default is the last 12 months.
+- **Sections** (Spending, Products, Compare): one or more top-level sections of the catalogue, plus "no category" (unidentified lines and manual products). With sections selected, spending is the sum of the matching receipt lines, so discounts and other receipt items are left out.
+- Filters live in the URL (shareable, survive reloads) and the last choice is remembered in the browser, so moving between pages keeps them.
+- **Spending:** totals for the period with the change against the previous comparable period (same days one, three… months earlier; same length otherwise), monthly chart, top items, spend per section (click to filter) and monthly table. Clicking a month narrows the period to that month and shows it highlighted among the 12 months before.
+- **Compare:** period A against baseline B — this month vs the same days last year, last month vs the one before, year to date vs the same dates last year, last 3 months vs the 3 before, or custom dates. Shows both totals, the difference, spend per section and the items that explain the change. Each item's change is split into a **price effect** (A quantity × change in average price) and a **quantity effect** (the rest); items bought in only one period are marked as new or dropped.
+- **Products:** besides search and sort, filter by identified / unidentified, minimum number of purchases and price trend (up / down) within the period.
+
 ---
 
 ## 5. Non-functional requirements
@@ -501,6 +513,7 @@ Gmail ──(sync_gmail)──> PDF stored
 | **3 · Products** | Mercadona API integration, aliases and review inbox (FR-04). |
 | **4 · Analytics & UI** | Monthly spend, product page with charts, dashboard, multilingual UI (FR-06, FR-07, FR-09, FR-10, FR-12). **Brought forward before phase 3**: products are grouped by receipt description until they are linked to the catalogue; category breakdown (FR-07) and catalogue price (FR-06) arrive with phases 3 and 5. |
 | **5 · Prices** | Daily catalogue price tracking and alerts (FR-05, FR-13). |
+| **6 · Filters & deployment** | Dynamic filters and period comparison (FR-14). Production stack on a home server with daily backups (`docs/deployment.md`). |
 
 ---
 
@@ -511,4 +524,4 @@ Gmail ──(sync_gmail)──> PDF stored
 - **Abbreviated descriptions:** automatic identification won't be perfect; the manual review inbox is essential.
 - **Receipt format variations:** collect several real PDFs (with discounts, returns, weighed products, different payment methods) for parser tests.
 - **Catalogue price vs. physical store:** the online price for warehouse `svq1` may differ from the physical store; that's why both series are stored separately.
-- **To decide:** automatic database backups?
+- **Backups:** daily on the production server (database + PDFs, 14 days kept) on the same disk; copying them elsewhere is still manual.

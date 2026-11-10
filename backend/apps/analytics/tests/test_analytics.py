@@ -185,3 +185,146 @@ def test_categories(client, linked):
         ("Lácteos", "4.30", "68.3"),
         (None, "2.00", "31.7"),
     ]
+
+
+# --- Dynamic filters (FR-14) -------------------------------------------------
+
+
+def test_previous_period():
+    from datetime import date
+
+    from apps.analytics.filters import Period
+
+    today = date(2026, 11, 10)
+    # Month-aligned periods shift by whole months, clipped to the month length
+    assert Period(date(2026, 11, 1), None).previous(today) == Period(
+        date(2026, 10, 1), date(2026, 10, 10)
+    )
+    assert Period(date(2026, 3, 1), date(2026, 3, 31)).previous(today) == Period(
+        date(2026, 2, 1), date(2026, 2, 28)
+    )
+    assert Period(date(2025, 12, 1), date(2026, 11, 10)).previous(today) == Period(
+        date(2024, 12, 1), date(2025, 11, 10)
+    )
+    # Other periods shift by their length in days
+    assert Period(date(2026, 11, 5), date(2026, 11, 9)).previous(today) == Period(
+        date(2026, 10, 31), date(2026, 11, 4)
+    )
+    assert Period().previous(today) is None
+
+
+@pytest.mark.parametrize(
+    "params",
+    [{"from": "2026-13-01"}, {"from": "2026-11-05", "to": "2026-11-01"}, {"sections": "x"}],
+)
+def test_bad_filters_are_rejected(client, params):
+    assert client.get(reverse("analytics-overview"), params).status_code == 400
+
+
+def test_monthly_with_period(client, data):
+    rows = client.get(
+        reverse("analytics-monthly"), {"from": "2026-09-01", "to": "2026-10-31"}
+    ).json()
+
+    assert [(r["month"], r["total"]) for r in rows] == [("2026-09", "2.00"), ("2026-10", "0.00")]
+
+
+def test_monthly_with_section_sums_matching_lines(client, linked):
+    receipt("2026-11-09 12:00", [("SIN ENLAZAR", "1", "2.00")])
+
+    rows = client.get(reverse("analytics-monthly"), {"months": "3", "sections": "1"}).json()
+    assert [(r["month"], r["total"], r["receipts"]) for r in rows] == [
+        ("2026-09", "2.00", 1),
+        ("2026-10", "0.00", 0),
+        ("2026-11", "4.30", 2),
+    ]
+    rows = client.get(reverse("analytics-monthly"), {"months": "1", "sections": "none"}).json()
+    assert [(r["month"], r["total"]) for r in rows] == [("2026-11", "2.00")]
+
+
+def test_overview(client, data):
+    body = client.get(
+        reverse("analytics-overview"), {"from": "2026-11-01", "to": "2026-11-30"}
+    ).json()
+
+    assert (body["total"], body["receipts"], body["average_receipt"]) == ("4.30", 2, "2.15")
+    assert (body["months"], body["average_month"]) == (1, "4.30")
+    assert body["previous"]["from"] == "2026-10-01" and body["previous"]["total"] == "0.00"
+    assert [(i["name"], i["spent"]) for i in body["by_spend"]] == [
+        ("LECHE", "3.70"),
+        ("PAN", "0.60"),
+    ]
+    assert body["sections"] == [
+        {"id": None, "section": None, "spent": "4.30", "share": "100.0", "items": 3}
+    ]
+
+
+def test_overview_all_time_has_no_previous(client, data):
+    body = client.get(reverse("analytics-overview")).json()
+
+    assert body["total"] == "6.30" and body["previous"] is None
+    assert body["months"] == 3  # September to November
+
+
+def test_categories_include_section_ids(client, linked):
+    body = client.get(reverse("analytics-categories")).json()
+
+    assert [(s["id"], s["section"]) for s in body["sections"]] == [(1, "Lácteos")]
+
+
+def test_compare(client, data):
+    body = client.get(
+        reverse("analytics-compare"),
+        {
+            "a_from": "2026-11-01",
+            "a_to": "2026-11-30",
+            "b_from": "2026-09-01",
+            "b_to": "2026-09-30",
+        },
+    ).json()
+
+    assert (body["a"]["total"], body["b"]["total"], body["diff"], body["diff_pct"]) == (
+        "4.30",
+        "2.00",
+        "2.30",
+        "115.0",
+    )
+    leche = body["increases"][0]
+    assert (leche["name"], leche["a_spent"], leche["b_spent"], leche["diff"]) == (
+        "LECHE",
+        "3.70",
+        "1.00",
+        "2.70",
+    )
+    # 3 units at 1.2333 instead of 1 at 1.00: price +0.70, quantity +2.00
+    assert (leche["price_effect"], leche["quantity_effect"]) == ("0.70", "2.00")
+    pan = body["decreases"][0]
+    assert (pan["name"], pan["diff"]) == ("PAN", "-0.40")
+    assert (body["new_items"], body["dropped_items"]) == (0, 0)
+
+
+def test_compare_requires_both_periods(client):
+    assert client.get(reverse("analytics-compare"), {"a_from": "2026-11-01"}).status_code == 400
+
+
+def test_items_filters(client, data):
+    url = reverse("analytics-items")
+
+    in_nov = client.get(url, {"from": "2026-11-01"}).json()
+    assert {(r["name"], r["purchases"]) for r in in_nov} == {("LECHE", 2), ("PAN", 1)}
+    assert [r["name"] for r in client.get(url, {"min_purchases": "3"}).json()] == ["LECHE"]
+    assert [r["name"] for r in client.get(url, {"trend": "up"}).json()] == ["LECHE", "PAN"]
+    assert client.get(url, {"trend": "down"}).json() == []
+    assert client.get(url, {"status": "identified"}).json() == []
+    assert client.get(url, {"status": "bogus"}).status_code == 400
+
+
+def test_items_section_filter(client, linked):
+    receipt("2026-11-09 12:00", [("SIN ENLAZAR", "1", "2.00")])
+    url = reverse("analytics-items")
+
+    assert [r["name"] for r in client.get(url, {"sections": "1"}).json()] == [
+        "Leche desnatada Hacendado"
+    ]
+    assert [r["name"] for r in client.get(url, {"sections": "none"}).json()] == ["SIN ENLAZAR"]
+    assert client.get(url, {"status": "unidentified"}).json()[0]["name"] == "SIN ENLAZAR"

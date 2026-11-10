@@ -4,7 +4,7 @@
   },
   "nav": {
     "dashboard": "Home",
-    "spending": "Monthly spending",
+    "spending": "Spending",
     "receipts": "Receipts",
     "products": "Products",
     "review": "Unidentified",
@@ -12,7 +12,8 @@
     "label": "Main navigation",
     "open": "Open menu",
     "close": "Close menu",
-    "prices": "Prices"
+    "prices": "Prices",
+    "compare": "Compare"
   },
   "language": {
     "label": "Language",
@@ -70,13 +71,10 @@
     "pendingTitle": "Receipts to review or with errors",
     "thisMonth": "This month ({{month}})",
     "vsAverage": "vs your monthly average",
-    "lastMonth": "Previous month ({{month}})",
     "receiptsCount_one": "{{count}} receipt",
     "receiptsCount_other": "{{count}} receipts",
-    "monthlyAverage": "Monthly average",
-    "last12": "Last 12 months with purchases",
     "allTime": "Total recorded",
-    "chartTitle": "Spending over the last 12 months",
+    "chartTitle": "Spending per month",
     "chartSubtitle": "Click a month to see the details",
     "seeSpending": "See monthly spending",
     "syncTitle": "Gmail sync",
@@ -88,36 +86,41 @@
     "latestReceipts": "Latest receipts",
     "seeAll": "See all",
     "priceAlerts": "Price alerts",
-    "priceAlertsSubtitle": "Things you buy regularly that cost something different at Mercadona today"
+    "priceAlertsSubtitle": "Things you buy regularly that cost something different at Mercadona today",
+    "periodTotal": "Spent in period",
+    "vsPreviousPeriod": "vs the previous period",
+    "periodAverage": "Monthly average"
   },
   "spending": {
-    "title": "Monthly spending",
-    "subtitle": "How much you spend each month, and on what",
-    "range": "Period",
-    "ranges": {
-      "6": "6 months",
-      "12": "12 months",
-      "24": "24 months",
-      "all": "All"
-    },
+    "title": "Spending",
+    "subtitle": "How much you spend and on what, for the period and categories you choose",
     "chartTitle": "Spending per month",
     "chartSubtitle": "{{total}} in the period · {{average}} average per month with purchases",
-    "clickHint": "Click a bar or a table row to see that month.",
+    "clickHint": "Click a bar or a table row to see only that month.",
     "monthTotal": "Spent",
     "receipts": "Receipts",
     "averageReceipt": "Average receipt",
-    "seeReceipts": "See this month's receipts",
+    "seeReceipts": "See receipts in period",
     "topBySpend": "What cost you the most",
     "topByPurchases": "What you buy most often",
-    "noItems": "No purchases this month.",
+    "noItems": "No purchases in this period.",
     "times_one": "{{count}} time",
     "times_other": "{{count}} times",
     "tableTitle": "Spending table",
     "month": "Month",
     "total": "Total",
     "categoriesTitle": "Spending by category",
-    "categoriesSubtitle": "Mercadona catalogue sections in the selected month",
-    "unidentified": "Unidentified"
+    "categoriesSubtitle": "Sections of Mercadona's catalogue. Click one to filter by it.",
+    "unidentified": "Unidentified",
+    "compare": "Compare periods",
+    "sectionsNote": "With categories selected, spending is the sum of those products (no discounts or other receipt items).",
+    "periodTotal": "Spent in period",
+    "vsPrevious": "vs {{total}} ({{range}})",
+    "averageMonth": "Monthly average",
+    "monthsCount_one": "{{count}} month",
+    "monthsCount_other": "{{count}} months",
+    "filterBySection": "Filter by this category",
+    "seeProducts": "See its products"
   },
   "receipts": {
     "title": "Receipts",
@@ -172,7 +175,7 @@
   },
   "products": {
     "title": "Products",
-    "subtitle": "Mercadona catalogue products you have bought, plus descriptions not yet identified.",
+    "subtitle": "What you bought in the period: products from Mercadona's catalogue and descriptions not yet identified.",
     "searchPlaceholder": "Search product",
     "sortBy": "Sort by",
     "sort": {
@@ -193,7 +196,22 @@
     "trend": "Trend",
     "lastPurchase": "Last purchase",
     "showMore": "Show more ({{count}} left)",
-    "unidentified": "Unidentified"
+    "unidentified": "Unidentified",
+    "statusFilter": "Show",
+    "status": {
+      "all": "All",
+      "identified": "Identified",
+      "unidentified": "Unidentified"
+    },
+    "minPurchases": "Purchases",
+    "atLeast_one": "Any",
+    "atLeast_other": "{{count}} or more",
+    "trendFilter": "Price",
+    "trends": {
+      "all": "Any",
+      "up": "Went up",
+      "down": "Went down"
+    }
   },
   "product": {
     "back": "Products",
@@ -344,5 +362,60 @@
     "before": "Before",
     "changedAt": "Date",
     "variableWeight": "Variable weight, price per kg"
+  },
+  "filters": {
+    "period": "Period",
+    "from": "From",
+    "to": "To",
+    "allTime": "Since the first receipt",
+    "start": "Start",
+    "today": "today",
+    "uncategorised": "No category",
+    "allSections": "All categories",
+    "sections": "Categories",
+    "sectionsCount_one": "{{count}} category",
+    "sectionsCount_other": "{{count}} categories",
+    "clear": "Clear filter",
+    "presets": {
+      "this_month": "This month",
+      "last_month": "Last month",
+      "3m": "Last 3 months",
+      "6m": "Last 6 months",
+      "12m": "Last 12 months",
+      "this_year": "This year",
+      "last_year": "Last year",
+      "all": "All time",
+      "custom": "Custom…"
+    }
+  },
+  "compare": {
+    "title": "Compare periods",
+    "subtitle": "What you spend more or less on than before, and why",
+    "kind": "Compare",
+    "a": "Period",
+    "b": "Baseline",
+    "kinds": {
+      "month_yoy": "This month vs same month last year",
+      "month_mom": "Last month vs the one before",
+      "ytd": "This year vs last year (same dates)",
+      "quarter": "Last 3 months vs the 3 before",
+      "custom": "Custom dates…"
+    },
+    "invalid": "Check the dates: each period must start before it ends.",
+    "difference": "Difference",
+    "noBaseline": "No purchases in the baseline",
+    "before": "before {{value}}",
+    "bySection": "By category",
+    "bySectionSubtitle": "Sorted by size of change",
+    "section": "Category",
+    "increases": "Where you spend more",
+    "decreases": "Where you spend less",
+    "effectsHint": "Price: explained by the change in average price. Quantity: buying more or less.",
+    "effects": "price {{price}} · quantity {{quantity}}",
+    "newItem": "new, you didn't buy it",
+    "droppedItem": "you no longer buy it",
+    "noIncreases": "You don't spend more on anything.",
+    "noDecreases": "You don't spend less on anything.",
+    "itemsFoot": "{{new}} products bought only in the period and {{dropped}} only in the baseline."
   }
 }

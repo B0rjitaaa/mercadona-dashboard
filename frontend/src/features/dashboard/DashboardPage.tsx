@@ -1,27 +1,37 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useMonthly, usePriceWatch, useReceipts, useSummary } from "../../api/queries";
+import { useMonthly, useOverview, usePriceWatch, useReceipts, useSummary } from "../../api/queries";
+import { FilterBar, useRangeLabel } from "../../components/filters/FilterBar";
 import { ItemCell } from "../../components/ItemCell";
 import { SpendBarChart } from "../../components/charts/SpendBarChart";
 import { ReceiptsTable } from "../../components/ReceiptsTable";
 import { SyncButton } from "../../components/SyncButton";
 import { Card, Delta, ErrorState, Loading, PageHeader, StatTile } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
+import { useFilters } from "../../lib/filters";
+import { monthPeriod, writePeriod } from "../../lib/period";
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const f = useFormatters();
   const navigate = useNavigate();
+  const rangeLabel = useRangeLabel();
+  const filters = useFilters();
+  // Inicio is about overall spending: the period applies, the section filter does not
+  const period = filters.range;
   const summary = useSummary();
-  const monthly = useMonthly("12");
+  const overview = useOverview(period);
+  const monthly = useMonthly(period);
   const latest = useReceipts({ page: 1 });
   const prices = usePriceWatch();
 
   const s = summary.data;
   const current = s ? Number(s.current_month.total) : 0;
-  const previous = s ? Number(s.previous_month.total) : 0;
   const average = s ? Number(s.average_month_12) : 0;
   const vsAverage = average ? ((current - average) / average) * 100 : 0;
+  const o = overview.data;
+  const previous = o?.previous ? Number(o.previous.total) : 0;
+  const vsPrevious = o && previous ? ((Number(o.total) - previous) / previous) * 100 : null;
 
   return (
     <div className="page">
@@ -36,9 +46,30 @@ export function DashboardPage() {
         </div>
       )}
 
+      <FilterBar filters={filters} sections={false} />
+
       <div className="grid grid-4">
-        {s ? (
+        {s && o ? (
           <>
+            <StatTile
+              label={t("dashboard.periodTotal")}
+              value={f.currency(o.total)}
+              foot={
+                o.previous ? (
+                  <>
+                    {vsPrevious !== null && <Delta value={vsPrevious} label={f.percent(vsPrevious)} />}
+                    <span>{t("dashboard.vsPreviousPeriod")}</span>
+                  </>
+                ) : (
+                  t("dashboard.receiptsCount", { count: o.receipts })
+                )
+              }
+            />
+            <StatTile
+              label={t("dashboard.periodAverage")}
+              value={f.currency(o.average_month)}
+              foot={t("spending.monthsCount", { count: o.months })}
+            />
             <StatTile
               label={t("dashboard.thisMonth", { month: f.monthLong(s.current_month.month, false) })}
               value={f.currency(current)}
@@ -48,16 +79,6 @@ export function DashboardPage() {
                   <span>{t("dashboard.vsAverage")}</span>
                 </>
               }
-            />
-            <StatTile
-              label={t("dashboard.lastMonth", { month: f.monthLong(s.previous_month.month, false) })}
-              value={f.currency(previous)}
-              foot={t("dashboard.receiptsCount", { count: s.previous_month.receipts })}
-            />
-            <StatTile
-              label={t("dashboard.monthlyAverage")}
-              value={f.currency(average)}
-              foot={t("dashboard.last12")}
             />
             <StatTile
               label={t("dashboard.allTime")}
@@ -77,7 +98,7 @@ export function DashboardPage() {
       <div className="grid grid-main">
         <Card
           title={t("dashboard.chartTitle")}
-          subtitle={t("dashboard.chartSubtitle")}
+          subtitle={`${rangeLabel(period)} · ${t("dashboard.chartSubtitle")}`}
           actions={<Link to="/spending">{t("dashboard.seeSpending")}</Link>}
         >
           {monthly.data ? (
@@ -88,7 +109,7 @@ export function DashboardPage() {
                 value: Number(m.total),
                 extra: t("dashboard.receiptsCount", { count: m.receipts }),
               }))}
-              onSelect={(month) => navigate(`/spending?month=${month}`)}
+              onSelect={(month) => navigate(`/spending?${writePeriod(new URLSearchParams(), monthPeriod(month))}`)}
             />
           ) : (
             <Loading rows={6} />

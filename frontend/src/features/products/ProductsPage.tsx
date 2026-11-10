@@ -2,12 +2,17 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useItems } from "../../api/queries";
 import { Sparkline } from "../../components/charts/Sparkline";
+import { FilterBar } from "../../components/filters/FilterBar";
 import { ItemCell } from "../../components/ItemCell";
 import { itemPath } from "../../components/ProductThumb";
 import { Card, Delta, EmptyState, ErrorState, Loading, PageHeader } from "../../components/ui";
 import { useFormatters } from "../../i18n/format";
+import { useFilters } from "../../lib/filters";
 
 const SORTS = ["spent", "purchases", "recent", "price_change", "name"] as const;
+const STATUSES = ["", "identified", "unidentified"] as const;
+const MIN_PURCHASES = ["1", "2", "3", "5", "10"] as const;
+const TRENDS = ["", "up", "down"] as const;
 const PAGE = 100;
 
 export function ProductsPage() {
@@ -17,8 +22,19 @@ export function ProductsPage() {
   const [params, setParams] = useSearchParams();
   const search = params.get("search") ?? "";
   const sort = params.get("sort") ?? "spent";
+  const status = params.get("status") ?? "";
+  const minPurchases = params.get("min_purchases") ?? "1";
+  const trend = params.get("trend") ?? "";
   const limit = Number(params.get("limit") ?? PAGE);
-  const items = useItems(search, sort);
+  const filters = useFilters();
+  const items = useItems({
+    ...filters.query,
+    search,
+    sort,
+    status,
+    trend,
+    min_purchases: minPurchases === "1" ? undefined : minPurchases,
+  });
 
   const set = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -32,6 +48,38 @@ export function ProductsPage() {
   return (
     <div className="page">
       <PageHeader title={t("products.title")} subtitle={t("products.subtitle")} />
+      <FilterBar filters={filters}>
+        <label className="filters secondary">
+          {t("products.statusFilter")}
+          <select value={status} onChange={(e) => set("status", e.target.value)}>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {t(`products.status.${s || "all"}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="filters secondary">
+          {t("products.minPurchases")}
+          <select value={minPurchases} onChange={(e) => set("min_purchases", e.target.value === "1" ? "" : e.target.value)}>
+            {MIN_PURCHASES.map((n) => (
+              <option key={n} value={n}>
+                {t("products.atLeast", { count: Number(n) })}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="filters secondary">
+          {t("products.trendFilter")}
+          <select value={trend} onChange={(e) => set("trend", e.target.value)}>
+            {TRENDS.map((v) => (
+              <option key={v} value={v}>
+                {t(`products.trends.${v || "all"}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </FilterBar>
       <Card>
         <div className="filters" style={{ marginBottom: 14 }}>
           <input

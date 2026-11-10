@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { ComparePage } from "./features/compare/ComparePage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { ProductDetailPage } from "./features/products/ProductDetailPage";
 import { PricesPage } from "./features/prices/PricesPage";
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "spending", element: <SpendingPage /> },
+      { path: "compare", element: <ComparePage /> },
       { path: "receipts", element: <ReceiptsPage /> },
       { path: "receipts/:id", element: <ReceiptDetailPage /> },
       { path: "products", element: <ProductsPage /> },

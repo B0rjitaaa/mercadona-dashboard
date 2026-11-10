@@ -4,7 +4,7 @@
   },
   "nav": {
     "dashboard": "Inicio",
-    "spending": "Gasto mensual",
+    "spending": "Gasto",
     "receipts": "Tickets",
     "products": "Productos",
     "review": "Sin identificar",
@@ -12,7 +12,8 @@
     "label": "Navegación principal",
     "open": "Abrir menú",
     "close": "Cerrar menú",
-    "prices": "Precios"
+    "prices": "Precios",
+    "compare": "Comparar"
   },
   "language": {
     "label": "Idioma",
@@ -70,13 +71,10 @@
     "pendingTitle": "Tickets por revisar o con error",
     "thisMonth": "Este mes ({{month}})",
     "vsAverage": "frente a tu media mensual",
-    "lastMonth": "Mes anterior ({{month}})",
     "receiptsCount_one": "{{count}} ticket",
     "receiptsCount_other": "{{count}} tickets",
-    "monthlyAverage": "Media mensual",
-    "last12": "Últimos 12 meses con compras",
     "allTime": "Total registrado",
-    "chartTitle": "Gasto de los últimos 12 meses",
+    "chartTitle": "Gasto por mes",
     "chartSubtitle": "Pulsa un mes para ver el detalle",
     "seeSpending": "Ver gasto mensual",
     "syncTitle": "Sincronización con Gmail",
@@ -88,36 +86,41 @@
     "latestReceipts": "Últimos tickets",
     "seeAll": "Ver todos",
     "priceAlerts": "Alertas de precio",
-    "priceAlertsSubtitle": "Lo que compras habitualmente y hoy cuesta distinto en Mercadona"
+    "priceAlertsSubtitle": "Lo que compras habitualmente y hoy cuesta distinto en Mercadona",
+    "periodTotal": "Gasto del periodo",
+    "vsPreviousPeriod": "frente al periodo anterior",
+    "periodAverage": "Media por mes"
   },
   "spending": {
-    "title": "Gasto mensual",
-    "subtitle": "Cuánto gastas cada mes y en qué",
-    "range": "Periodo",
-    "ranges": {
-      "6": "6 meses",
-      "12": "12 meses",
-      "24": "24 meses",
-      "all": "Todo"
-    },
+    "title": "Gasto",
+    "subtitle": "Cuánto gastas y en qué, en el periodo y las categorías que elijas",
     "chartTitle": "Gasto por mes",
     "chartSubtitle": "{{total}} en el periodo · {{average}} de media por mes con compras",
-    "clickHint": "Pulsa una barra o una fila de la tabla para ver ese mes.",
+    "clickHint": "Pulsa una barra o una fila de la tabla para ver solo ese mes.",
     "monthTotal": "Gasto",
     "receipts": "Tickets",
     "averageReceipt": "Ticket medio",
-    "seeReceipts": "Ver tickets del mes",
+    "seeReceipts": "Ver tickets del periodo",
     "topBySpend": "Lo que más te ha costado",
     "topByPurchases": "Lo que más compras",
-    "noItems": "No hay compras este mes.",
+    "noItems": "No hay compras en este periodo.",
     "times_one": "{{count}} vez",
     "times_other": "{{count}} veces",
     "tableTitle": "Tabla de gasto",
     "month": "Mes",
     "total": "Total",
     "categoriesTitle": "Gasto por categoría",
-    "categoriesSubtitle": "Secciones del catálogo de Mercadona en el mes seleccionado",
-    "unidentified": "Sin identificar"
+    "categoriesSubtitle": "Secciones del catálogo de Mercadona. Pulsa una para filtrar por ella.",
+    "unidentified": "Sin identificar",
+    "compare": "Comparar periodos",
+    "sectionsNote": "Con categorías elegidas, el gasto es la suma de esos productos (sin descuentos ni otros conceptos del ticket).",
+    "periodTotal": "Gasto del periodo",
+    "vsPrevious": "frente a {{total}} ({{range}})",
+    "averageMonth": "Media por mes",
+    "monthsCount_one": "{{count}} mes",
+    "monthsCount_other": "{{count}} meses",
+    "filterBySection": "Filtrar por esta categoría",
+    "seeProducts": "Ver sus productos"
   },
   "receipts": {
     "title": "Tickets",
@@ -172,7 +175,7 @@
   },
   "products": {
     "title": "Productos",
-    "subtitle": "Productos del catálogo de Mercadona que has comprado, y descripciones aún sin identificar.",
+    "subtitle": "Lo que has comprado en el periodo: productos del catálogo de Mercadona y descripciones aún sin identificar.",
     "searchPlaceholder": "Buscar producto",
     "sortBy": "Ordenar por",
     "sort": {
@@ -193,7 +196,22 @@
     "trend": "Tendencia",
     "lastPurchase": "Última compra",
     "showMore": "Mostrar más ({{count}} restantes)",
-    "unidentified": "Sin identificar"
+    "unidentified": "Sin identificar",
+    "statusFilter": "Mostrar",
+    "status": {
+      "all": "Todos",
+      "identified": "Identificados",
+      "unidentified": "Sin identificar"
+    },
+    "minPurchases": "Compras",
+    "atLeast_one": "Cualquiera",
+    "atLeast_other": "{{count}} o más",
+    "trendFilter": "Precio",
+    "trends": {
+      "all": "Cualquiera",
+      "up": "Ha subido",
+      "down": "Ha bajado"
+    }
   },
   "product": {
     "back": "Productos",
@@ -344,5 +362,60 @@
     "before": "Antes",
     "changedAt": "Fecha",
     "variableWeight": "Peso variable, precio por kg"
+  },
+  "filters": {
+    "period": "Periodo",
+    "from": "Desde",
+    "to": "Hasta",
+    "allTime": "Desde el primer ticket",
+    "start": "Inicio",
+    "today": "hoy",
+    "uncategorised": "Sin categoría",
+    "allSections": "Todas las categorías",
+    "sections": "Categorías",
+    "sectionsCount_one": "{{count}} categoría",
+    "sectionsCount_other": "{{count}} categorías",
+    "clear": "Quitar filtro",
+    "presets": {
+      "this_month": "Este mes",
+      "last_month": "Mes pasado",
+      "3m": "Últimos 3 meses",
+      "6m": "Últimos 6 meses",
+      "12m": "Últimos 12 meses",
+      "this_year": "Este año",
+      "last_year": "Año pasado",
+      "all": "Todo",
+      "custom": "Personalizado…"
+    }
+  },
+  "compare": {
+    "title": "Comparar periodos",
+    "subtitle": "En qué gastas más o menos que antes, y por qué",
+    "kind": "Comparar",
+    "a": "Periodo",
+    "b": "Referencia",
+    "kinds": {
+      "month_yoy": "Este mes vs mismo mes del año pasado",
+      "month_mom": "Mes pasado vs el anterior",
+      "ytd": "Este año vs año pasado (mismas fechas)",
+      "quarter": "Últimos 3 meses vs los 3 anteriores",
+      "custom": "Fechas a medida…"
+    },
+    "invalid": "Revisa las fechas: el inicio de cada periodo debe ser anterior a su final.",
+    "difference": "Diferencia",
+    "noBaseline": "Sin compras en la referencia",
+    "before": "antes {{value}}",
+    "bySection": "Por categoría",
+    "bySectionSubtitle": "Ordenadas por el tamaño del cambio",
+    "section": "Categoría",
+    "increases": "Dónde gastas más",
+    "decreases": "Dónde gastas menos",
+    "effectsHint": "Precio: lo que explica el cambio de precio medio. Cantidad: comprar más o menos.",
+    "effects": "precio {{price}} · cantidad {{quantity}}",
+    "newItem": "nuevo, no lo comprabas",
+    "droppedItem": "ya no lo compras",
+    "noIncreases": "No gastas más en nada.",
+    "noDecreases": "No gastas menos en nada.",
+    "itemsFoot": "{{new}} productos comprados solo en el periodo y {{dropped}} solo en la referencia."
   }
 }
