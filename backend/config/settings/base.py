@@ -102,7 +102,9 @@ CELERY_TASK_ACKS_LATE = True
 # Gmail
 GMAIL_CREDENTIALS_FILE = os.environ.get("GMAIL_CREDENTIALS_FILE", "/app/secrets/credentials.json")
 GMAIL_TOKEN_FILE = os.environ.get("GMAIL_TOKEN_FILE", "/app/secrets/token.json")
-GMAIL_QUERY = os.environ.get("GMAIL_QUERY", "from:mercadona has:attachment filename:pdf")
+GMAIL_QUERY = os.environ.get(
+    "GMAIL_QUERY", "from:ticket_digital@mail.mercadona.com has:attachment filename:pdf"
+)
 
 # Mercadona API
 MERCADONA_BASE_URL = "https://tienda.mercadona.es/api"

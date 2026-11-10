@@ -11,3 +11,6 @@ backend/staticfiles/
 node_modules/
 frontend/dist/
 .DS_Store
+celerybeat-schedule*
+backend/apps/receipts/tests/fixtures/private/*
+!backend/apps/receipts/tests/fixtures/private/README.md

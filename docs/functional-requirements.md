@@ -3,7 +3,7 @@
 > Self-hosted platform to track and analyse supermarket spending (initially Mercadona) from the digital receipts that arrive in a Gmail inbox.
 
 - **Repository:** https://github.com/B0rjitaaa/mercadona-dashboard
-- **Document version:** 0.2
+- **Document version:** 0.3
 - **Last updated:** 2026-11-10
 
 ### Changelog
@@ -12,6 +12,7 @@
 |---|---|---|
 | 0.1 | 2026-11-10 | Initial draft (Spanish). |
 | 0.2 | 2026-11-10 | Translated to English. Added language policy (NFR-09, NFR-10), multilingual UI (FR-12), architecture & project structure (section 7). |
+| 0.3 | 2026-11-10 | Gmail sender address (FR-01). Real receipt layout: VAT table and payment details (FR-02). Git branching model (NFR-11). Test fixture privacy (NFR-08). |
 
 ---
 
@@ -64,6 +65,7 @@ A web application that runs locally (Docker) and:
 - Runs **once a day** at a configurable time (default 07:00).
 - Can be **triggered manually** from the UI ("Sync now").
 - Only processes emails matching a configurable filter (sender, subject and/or Gmail label). The filter lives in configuration, not in code.
+- Receipts are sent by **`Ticket Digital Mercadona <ticket_digital@mail.mercadona.com>`**. Default filter: `from:ticket_digital@mail.mercadona.com has:attachment filename:pdf`.
 - Only processes emails **newer** than the last successful sync.
 - The PDF attachment is downloaded and stored locally so it can be re-processed.
 - An already processed email **never creates a duplicate receipt** (checked by Gmail message ID and by simplified-invoice number).
@@ -92,6 +94,9 @@ A web application that runs locally (Docker) and:
 | Simplified-invoice number | `1234-001-000001` (unique receipt identifier) |
 | Total | `43,55 €` |
 | Payment method | `TARJETA BANCARIA` |
+| VAT breakdown | `4% 9,13 0,36 9,49` (rate, base, tax, total per rate) |
+
+**Not stored:** card number digits, authorisation codes (`AUT`, `ARC`, `AID`) and card type printed below the VAT table.
 
 **Line types to support:**
 
@@ -101,7 +106,9 @@ A web application that runs locally (Docker) and:
    `2 SALMOREJO FRESCO   1,65   3,30`
 3. **Weighed product** — the product line is followed by a line with weight and price per kg:
    `1 PLATANO` / `0,728 kg   3,20 €/kg   2,33`
-4. **Other lines** that may appear on other receipts (discounts, returns, parking, VAT breakdown, etc.): must be detected and stored with a specific line type without breaking parsing.
+4. **Other lines** that may appear on other receipts (discounts, returns, parking, etc.): must be detected and stored with a specific line type without breaking parsing.
+
+**Footer:** after `TOTAL (€)` come the payment method line, the VAT table (`IVA BASE IMP. (€) CUOTA (€) TOTAL (€)`, one row per rate plus a `TOTAL` row) and the card payment details.
 
 **Stored per line:** quantity (units or kg), unit of measure (`unit` / `kg`), description as printed, unit price (per unit or per kg), line amount.
 
@@ -110,6 +117,7 @@ If the receipt only shows the amount (quantity 1), unit price equals the amount.
 **Validations:**
 
 - The sum of line amounts must equal the `TOTAL`. Otherwise the receipt is flagged **"Needs review"** and highlighted in the UI.
+- The sum of the VAT table totals must also equal the `TOTAL`.
 - Amounts use a decimal comma (`4,86`) and are converted to exact decimals (never `float`).
 - If the PDF cannot be parsed, the receipt is set to **"Error"** with the reason, and the original PDF is kept for retry.
 
@@ -279,10 +287,10 @@ Screen (or environment variables) for:
 | NFR-05 | **Traceability:** the original PDF of each receipt and the log of every job run are kept. |
 | NFR-06 | **Monetary precision:** every amount is stored as an exact decimal. |
 | NFR-07 | **Extensibility:** the data model allows other supermarkets in the future (store chain as its own entity, one parser per chain). |
-| NFR-08 | **Quality:** automated parser tests with real (anonymised) PDFs covering every line type. Lint (`ruff`) and tests must pass before merging. |
+| NFR-08 | **Quality:** automated parser tests against real receipts covering every line type. Real PDFs are kept locally in a git-ignored folder (they contain card digits); an anonymised text version of each one is committed so tests always run. Lint (`ruff`) and tests must pass before merging. |
 | NFR-09 | **Project language:** everything except the frontend UI is written in **English**: code, identifiers, comments, docstrings, API fields, log messages, documentation, commit messages and pull requests. |
 | NFR-10 | **UI language:** the frontend is multilingual (see FR-12). No user-facing text is hard-coded in components; it always goes through translation files. |
-| NFR-11 | **Version control:** commits are authored by the repository owner (Borja). Conventional Commits style (`feat:`, `fix:`, `chore:`…). Work on feature branches merged into `main`. |
+| NFR-11 | **Version control:** commits are authored by the repository owner (Borja), Conventional Commits style (`feat:`, `fix:`, `chore:`…). Branching model: `feature/*` → `develop` → `main`. Features are merged into `develop`; `develop` is merged into `main` only when lint and tests pass. |
 
 ---
 
