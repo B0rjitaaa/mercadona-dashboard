@@ -5,6 +5,9 @@ from apps.core.models import TimeStampedModel
 
 class Store(TimeStampedModel):
     chain = models.CharField(max_length=50, default="mercadona")
+    # Mercadona store number, first block of the invoice number ("1234-001-000001").
+    # The printed address varies between receipts, the code does not.
+    code = models.CharField(max_length=10)
     company_name = models.CharField(max_length=200, blank=True)
     tax_id = models.CharField(max_length=20, blank=True)
     address = models.CharField(max_length=200)
@@ -13,11 +16,7 @@ class Store(TimeStampedModel):
     phone = models.CharField(max_length=20, blank=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["chain", "address", "postal_code"], name="unique_store_location"
-            )
-        ]
+        constraints = [models.UniqueConstraint(fields=["chain", "code"], name="unique_store_code")]
         ordering = ["chain", "city", "address"]
 
     def __str__(self) -> str:
@@ -39,6 +38,10 @@ class Receipt(TimeStampedModel):
         UPLOAD = "upload"
         GMAIL = "gmail"
 
+    class Kind(models.TextChoices):
+        SALE = "sale"
+        RETURN = "return"
+
     # Source document
     pdf = models.FileField(upload_to=receipt_upload_path)
     pdf_sha256 = models.CharField(max_length=64, unique=True)
@@ -53,6 +56,8 @@ class Receipt(TimeStampedModel):
 
     # Parsed data
     invoice_number = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.SALE)
+    original_invoice_number = models.CharField(max_length=30, blank=True)
     store = models.ForeignKey(
         Store, on_delete=models.PROTECT, related_name="receipts", null=True, blank=True
     )
@@ -73,6 +78,7 @@ class ReceiptLine(models.Model):
     class LineType(models.TextChoices):
         PRODUCT = "product"
         DISCOUNT = "discount"
+        RETURN = "return"
         OTHER = "other"
 
     class Unit(models.TextChoices):

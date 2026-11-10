@@ -7,12 +7,13 @@ dataclasses, so it can be tested in isolation against real PDFs in tests/fixture
 from .errors import ReceiptParseError
 from .pdf import extract_text, parse_pdf
 from .text_parser import parse_text
-from .types import LineType, ParsedLine, ParsedReceipt, Unit, VatRate
+from .types import LineType, ParsedLine, ParsedReceipt, ReceiptKind, Unit, VatRate
 
 __all__ = [
     "LineType",
     "ParsedLine",
     "ParsedReceipt",
+    "ReceiptKind",
     "ReceiptParseError",
     "Unit",
     "VatRate",

@@ -65,15 +65,16 @@ def _mark_error(receipt: Receipt, message: str) -> Receipt:
 
 def _apply_parsed(receipt: Receipt, parsed: ParsedReceipt) -> None:
     store = None
-    if parsed.store_address and parsed.postal_code:
+    if parsed.store_code:
         store, _ = Store.objects.update_or_create(
             chain="mercadona",
-            address=parsed.store_address,
-            postal_code=parsed.postal_code,
+            code=parsed.store_code,
             defaults={
                 "company_name": parsed.company_name,
                 "tax_id": parsed.tax_id,
-                "city": parsed.city,
+                "address": parsed.store_address,
+                "postal_code": parsed.postal_code,
+                "city": parsed.city.upper(),
                 "phone": parsed.phone,
             },
         )
@@ -84,6 +85,8 @@ def _apply_parsed(receipt: Receipt, parsed: ParsedReceipt) -> None:
 
     receipt.store = store
     receipt.invoice_number = parsed.invoice_number
+    receipt.kind = parsed.kind.value
+    receipt.original_invoice_number = parsed.original_invoice_number
     receipt.issued_at = (
         timezone.make_aware(parsed.issued_at, timezone.get_default_timezone())
         if parsed.issued_at
