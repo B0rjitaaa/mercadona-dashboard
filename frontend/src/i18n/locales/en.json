@@ -320,7 +320,8 @@
       "fri": "Friday",
       "sat": "Saturday",
       "sun": "Sunday"
-    }
+    },
+    "reportSchedule": "Sent"
   },
   "review": {
     "title": "Unidentified products",
