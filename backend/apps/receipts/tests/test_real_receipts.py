@@ -1,7 +1,9 @@
-"""Parser tests against real Mercadona receipts.
+"""Parser tests against real Mercadona receipts (local only).
 
-- fixtures/real/*.txt: anonymised text of real receipts (committed).
-- fixtures/private/*.pdf: the original PDFs (git-ignored; tests skip when missing).
+- fixtures/private/*.pdf: the original PDFs.
+- fixtures/real/*.txt: anonymised text versions of those PDFs.
+
+Both folders are git-ignored (personal data), so these tests are skipped when empty.
 """
 
 from pathlib import Path
@@ -15,10 +17,6 @@ from .anonymise_fixtures import anonymise
 FIXTURES = Path(__file__).parent / "fixtures"
 TEXTS = sorted((FIXTURES / "real").glob("*.txt"))
 PDFS = sorted((FIXTURES / "private").glob("*.pdf"))
-
-
-def test_there_are_real_fixtures():
-    assert TEXTS, "Add anonymised receipts to fixtures/real/"
 
 
 @pytest.mark.parametrize("path", TEXTS, ids=lambda p: p.stem)
