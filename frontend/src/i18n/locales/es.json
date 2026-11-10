@@ -76,6 +76,8 @@
     "allTime": "Total registrado",
     "chartTitle": "Gasto por mes",
     "chartSubtitle": "Pulsa un mes para ver el detalle",
+    "monthSpend": "Gasto del mes",
+    "averageReceipt": "Ticket medio",
     "chartTitleWeekly": "Gasto por semana",
     "chartSubtitleWeekly": "Pulsa una semana para ver el detalle",
     "seeSpending": "Ver gasto mensual",
