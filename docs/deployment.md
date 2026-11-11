@@ -1,5 +1,8 @@
 # Deployment (home server)
 
+> First install? The [installation guide](installation.md) covers everything step by step,
+> including Gmail. This page is the reference for the production stack.
+
 The production stack runs on any Linux machine with Docker (e.g. Linux Mint) and is
 reachable from the local network. It is **not** meant to be exposed to the Internet:
 there is no login and it is served over plain HTTP.
@@ -27,7 +30,9 @@ cp .env.prod.example .env       # fill in the blanks
 ```
 
 Copy the Gmail OAuth files from the old machine into `secrets/`
-(`credentials.json` and `token.json`). Without them, run `make gmail-auth` on the server.
+(`credentials.json` and `token.json`). Without them, follow
+[installation.md, steps 5 and 6](installation.md#5-create-the-google-cloud-credentials)
+(`make prod-gmail-auth` on the server).
 
 ## 2. Move the data (optional)
 
@@ -58,9 +63,10 @@ Open `http://<server-ip>:8080` (port set by `WEB_PORT`).
 
 Set `REPORT_EMAIL_TO` (and optionally `REPORT_DAY`, `REPORT_HOUR`, `REPORT_BASE_URL`) in
 `.env` and run `make prod-up`. Sending needs a Gmail token with send permission; tokens
-created before the summary existed can only read. Authorise again where you have a browser
-(the OAuth redirect goes to `localhost`), e.g. on the development machine with
-`make gmail-auth`, then copy `secrets/token.json` to the server and restart `worker`.
+created before the summary existed can only read. Authorise again with `make prod-gmail-auth` on the
+server (see [installation.md, step 6](installation.md#6-authorise-the-app-to-read-your-receipts)
+for the SSH tunnel), or with `make gmail-auth` on a machine with a browser and copy
+`secrets/token.json` to the server; then restart `worker`.
 Settings → "Weekly email summary" shows whether the token can send, a preview and a
 "Send now" button.
 

@@ -1,4 +1,4 @@
-.PHONY: up up-jobs down build logs migrate makemigrations shell superuser test lint gmail-auth
+.PHONY: up up-jobs down build logs migrate makemigrations shell superuser test lint gmail-auth seed-demo
 
 up:            ; docker compose up -d
 up-jobs:       ; docker compose --profile jobs up -d
@@ -11,7 +11,10 @@ shell:         ; docker compose exec backend python manage.py shell
 superuser:     ; docker compose exec backend python manage.py createsuperuser
 test:          ; docker compose exec backend pytest
 lint:          ; docker compose exec backend ruff check .
-gmail-auth:    ; docker compose run --rm -p 8080:8080 backend python manage.py gmail_auth
+# Port for the OAuth redirect (http://localhost:<port>/); change it if 8080 is taken
+GMAIL_AUTH_PORT ?= 8080
+gmail-auth:    ; docker compose run --rm -p $(GMAIL_AUTH_PORT):$(GMAIL_AUTH_PORT) backend python manage.py gmail_auth --port $(GMAIL_AUTH_PORT)
+seed-demo:     ; docker compose exec backend python manage.py seed_demo
 
 # --- Production (home server) -------------------------------------------------
 # PROD=1 makes the backup/restore targets act on the production stack.
@@ -20,13 +23,16 @@ COMPOSE := $(if $(PROD),$(PROD_COMPOSE),docker compose)
 
 STAMP := $(shell date +%Y%m%d-%H%M%S)
 
-.PHONY: prod-up prod-down prod-logs prod-ps prod-backup-now backup restore
+.PHONY: prod-up prod-down prod-logs prod-ps prod-backup-now prod-gmail-auth backup restore
 
 prod-up:       ; $(PROD_COMPOSE) up -d --build
 prod-down:     ; $(PROD_COMPOSE) down
 prod-logs:     ; $(PROD_COMPOSE) logs -f
 prod-ps:       ; $(PROD_COMPOSE) ps
 prod-backup-now: ; $(PROD_COMPOSE) exec backup sh /usr/local/bin/backup.sh
+# The web UI already listens on 8080 in production, so the OAuth redirect uses 8090
+PROD_GMAIL_AUTH_PORT ?= 8090
+prod-gmail-auth: ; $(PROD_COMPOSE) run --rm --no-deps -p $(PROD_GMAIL_AUTH_PORT):$(PROD_GMAIL_AUTH_PORT) backend python manage.py gmail_auth --port $(PROD_GMAIL_AUTH_PORT)
 
 # Database dump + receipt PDFs into backups/ (git-ignored)
 backup:
