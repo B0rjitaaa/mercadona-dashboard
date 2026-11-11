@@ -2,6 +2,11 @@
 
 Self-hosted platform to track supermarket spending from the digital Mercadona receipts that arrive in Gmail.
 
+![Home page with demo data](docs/images/home.png)
+
+**New here? Follow the [installation guide](docs/installation.md)**: it walks through
+Docker, the Gmail and Google Cloud setup (step by step) and the first import.
+
 See [docs/functional-requirements.md](docs/functional-requirements.md) for the full specification and [PRIVACY.md](PRIVACY.md) for the privacy policy.
 
 ## Quick start
@@ -29,12 +34,14 @@ make lint            # ruff
 make makemigrations  # create migrations
 make migrate         # apply migrations
 make backup          # database dump + receipt PDFs into backups/
+make seed-demo       # fictitious receipts in an empty database (remove: seed_demo --remove)
 ```
 
 ## Production
 
-To run it on a home server (nginx + gunicorn, starts on boot) see
-[docs/deployment.md](docs/deployment.md).
+To run it on a home server (nginx + gunicorn, starts on boot) see the
+[installation guide](docs/installation.md) for a first install and
+[docs/deployment.md](docs/deployment.md) for the stack, backups and moving to another machine.
 
 ## Conventions
 
